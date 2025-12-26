@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crypto AI Agent | Professional Memecoin Analyzer</title>
+  <meta name="description" content="Professional AI-powered memecoin analyzer using live data from Dexscreener and Axiom Exchange. Get real-time market data, risk analysis, and price predictions.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="index.css">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-content">
+      <div class="logo">
+        <div class="logo-icon">🤖</div>
+        <span>Crypto <span class="text-gradient">AI Agent</span></span>
+      </div>
+      <div class="badge">MEMECOIN ANALYZER</div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="container">
+        <h1 class="hero-title">
+          <span class="text-gradient text-glow">Professional Memecoin</span><br>
+          Analysis Terminal
+        </h1>
+        <p class="hero-subtitle">
+          Get real-time market data, on-chain metrics, risk analysis, and 6-month predictions 
+          powered by Dexscreener & Axiom Exchange data.
+        </p>
+        
+        <!-- Search Box -->
+        <div class="search-container">
+          <form class="search-box" id="searchForm">
+            <input 
+              type="text" 
+              class="search-input" 
+              id="tokenInput"
+              placeholder="Enter token ticker (e.g. WIF) or contract address..."
+              autocomplete="off"
+              spellcheck="false"
+            >
+            <button type="submit" class="search-btn" id="analyzeBtn">
+              <span>🔍</span>
+              <span>Analyze</span>
+            </button>
+          </form>
+          <p class="search-hint">
+            ⚠️ Only memecoins on Dexscreener & Axiom Exchange • No BTC/ETH/Large Caps
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Loading State -->
+    <div class="loading" id="loadingState">
+      <div class="container">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Fetching live data from Dexscreener...</p>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div class="error-box" id="errorState">
+      <div class="error-icon">❌</div>
+      <h3 class="error-title">Token Not Found</h3>
+      <p class="error-message" id="errorMessage">
+        Token not found on Dexscreener or Axiom Exchange. Please check the ticker or contract address.
+      </p>
+    </div>
+
+    <!-- Results Section -->
+    <section class="results-section" id="resultsSection">
+      <div class="container">
+        <div class="section-grid">
+          
+          <!-- 1. Token Identification -->
+          <div class="card" id="tokenCard">
+            <div class="token-header">
+              <img src="" alt="Token Logo" class="token-image" id="tokenImage">
+              <div class="token-info">
+                <h2>
+                  <span id="tokenName">Token Name</span>
+                  <span class="token-ticker" id="tokenTicker">($TICKER)</span>
+                </h2>
+                <p class="token-address" id="tokenAddress">Contract Address</p>
+                <div class="chain-badge" id="chainBadge">
+                  <span>⛓️</span>
+                  <span id="chainName">Solana</span>
+                </div>
+              </div>
+            </div>
+            <div class="data-grid">
+              <a href="#" target="_blank" class="data-item" id="dexscreenerLink" style="text-decoration: none;">
+                <div class="data-label">View on</div>
+                <div class="data-value" style="color: var(--accent-primary);">Dexscreener ↗</div>
+              </a>
+              <a href="#" target="_blank" class="data-item" id="axiomLink" style="text-decoration: none;">
+                <div class="data-label">View on</div>
+                <div class="data-value" style="color: var(--accent-primary);">Axiom ↗</div>
+              </a>
+            </div>
+          </div>
+
+          <!-- 2. Live Market Data -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">📊</div>
+              <h3 class="card-title">Live Market Data</h3>
+            </div>
+            <div class="data-grid">
+              <div class="data-item">
+                <div class="data-label">Current Price</div>
+                <div class="data-value" id="currentPrice">$0.00</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Market Cap</div>
+                <div class="data-value" id="marketCap">$0</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Liquidity (USD)</div>
+                <div class="data-value" id="liquidity">$0</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">24H Volume</div>
+                <div class="data-value" id="volume24h">$0</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">24H Change</div>
+                <div class="data-value" id="priceChange24h">0%</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Total Supply</div>
+                <div class="data-value" id="totalSupply">N/A</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. On-Chain & Trading Metrics -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">🔗</div>
+              <h3 class="card-title">On-Chain & Trading Metrics</h3>
+            </div>
+            <div class="data-grid">
+              <div class="data-item">
+                <div class="data-label">24H Transactions</div>
+                <div class="data-value" id="txCount24h">0</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">24H Buys</div>
+                <div class="data-value positive" id="buys24h">0</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">24H Sells</div>
+                <div class="data-value negative" id="sells24h">0</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Buy/Sell Ratio</div>
+                <div class="data-value" id="buySellRatio">1.00</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Liquidity Lock</div>
+                <div class="data-value warning" id="liquidityLock">Unknown</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Risk Flags</div>
+                <div class="data-value" id="riskFlags">Checking...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Market Sentiment & Momentum -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">📈</div>
+              <h3 class="card-title">Market Sentiment & Momentum</h3>
+            </div>
+            <div class="data-grid">
+              <div class="data-item">
+                <div class="data-label">Volume Trend</div>
+                <div class="data-value" id="volumeTrend">Stable</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Whale Activity</div>
+                <div class="data-value" id="whaleActivity">Neutral</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Community Hype</div>
+                <div class="data-value" id="communityHype">Medium</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Price Volatility</div>
+                <div class="data-value" id="volatility">Medium</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Trend Direction</div>
+                <div class="data-value" id="trendDirection">Neutral</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Pair Count</div>
+                <div class="data-value" id="pairCount">1</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. 6-Month Price Prediction -->
+          <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-header">
+              <div class="card-icon">🔮</div>
+              <h3 class="card-title">6-Month Price Prediction (SPECULATIVE)</h3>
+            </div>
+            
+            <div class="prediction-grid">
+              <!-- Bullish -->
+              <div class="prediction-card bullish">
+                <div class="prediction-icon">📈</div>
+                <div class="prediction-title">BULLISH SCENARIO</div>
+                <div class="prediction-range" id="bullishPrice">$0.00 - $0.00</div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                  Market Cap: <span id="bullishMcap">$0 - $0</span>
+                </p>
+              </div>
+              
+              <!-- Neutral -->
+              <div class="prediction-card neutral">
+                <div class="prediction-icon">⚖️</div>
+                <div class="prediction-title">NEUTRAL SCENARIO</div>
+                <div class="prediction-range" id="neutralPrice">$0.00 - $0.00</div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                  Market Cap: <span id="neutralMcap">$0 - $0</span>
+                </p>
+              </div>
+              
+              <!-- Bearish -->
+              <div class="prediction-card bearish">
+                <div class="prediction-icon">📉</div>
+                <div class="prediction-title">BEARISH SCENARIO</div>
+                <div class="prediction-range" id="bearishPrice">$0.00 - $0.00</div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                  Market Cap: <span id="bearishMcap">$0 - $0</span>
+                </p>
+              </div>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="disclaimer">
+              <div class="disclaimer-title">
+                <span>⚠️</span>
+                MANDATORY DISCLAIMER
+              </div>
+              <p class="disclaimer-text">
+                <strong>This is NOT financial advice.</strong> Predictions are speculative and based on 
+                historical data, market behavior, and on-chain indicators. Cryptocurrency markets are 
+                highly volatile and unpredictable. Never invest more than you can afford to lose. 
+                Always do your own research (DYOR) before making any investment decisions.
+              </p>
+            </div>
+          </div>
+
+          <!-- 6. Risk Analysis -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">🛡️</div>
+              <h3 class="card-title">Risk Analysis</h3>
+            </div>
+            
+            <div class="risk-score" id="overallRiskScore">
+              5<span>/10</span>
+            </div>
+            
+            <div style="margin-top: 1.5rem;">
+              <div class="data-item" style="margin-bottom: 1rem;">
+                <div class="data-label">Rug Pull Risk</div>
+                <div class="data-value" id="rugPullRisk">Medium</div>
+                <div class="risk-meter">
+                  <div class="risk-meter-fill medium" id="rugPullMeter"></div>
+                </div>
+              </div>
+              
+              <div class="data-item" style="margin-bottom: 1rem;">
+                <div class="data-label">Liquidity Risk</div>
+                <div class="data-value" id="liquidityRisk">Medium</div>
+                <div class="risk-meter">
+                  <div class="risk-meter-fill medium" id="liquidityMeter"></div>
+                </div>
+              </div>
+              
+              <div class="data-item" style="margin-bottom: 1rem;">
+                <div class="data-label">Holder Concentration Risk</div>
+                <div class="data-value" id="holderRisk">Medium</div>
+                <div class="risk-meter">
+                  <div class="risk-meter-fill medium" id="holderMeter"></div>
+                </div>
+              </div>
+              
+              <div class="data-item">
+                <div class="data-label">Volatility Risk</div>
+                <div class="data-value" id="volatilityRisk">Medium</div>
+                <div class="risk-meter">
+                  <div class="risk-meter-fill medium" id="volatilityMeter"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. Final AI Verdict -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">🧠</div>
+              <h3 class="card-title">Final AI Verdict</h3>
+            </div>
+            
+            <div class="verdict-box">
+              <div class="verdict-header">
+                <div class="verdict-icon" id="verdictIcon">⚖️</div>
+                <div>
+                  <h4 style="margin-bottom: 0.25rem;">Project Strength</h4>
+                  <div class="data-value" id="projectStrength" style="font-size: 1.25rem;">Moderate</div>
+                </div>
+              </div>
+              
+              <p class="verdict-text" id="verdictSummary">
+                This token shows mixed signals with moderate risk levels. Further analysis recommended before any investment decisions.
+              </p>
+              
+              <div style="margin-top: 1rem;">
+                <div class="data-label">Best Suited For:</div>
+                <div class="verdict-tags" id="suitableTags">
+                  <span class="verdict-tag">Short-term traders</span>
+                  <span class="verdict-tag">High-risk memecoin investors</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-links">
+        <a href="https://dexscreener.com" target="_blank">Dexscreener</a>
+        <a href="https://axiom.trade" target="_blank">Axiom Exchange</a>
+      </div>
+      <p>
+        🤖 Crypto AI Agent • Data sourced from Dexscreener & Axiom Exchange<br>
+        <small>This tool is for educational purposes only. Not financial advice.</small>
+      </p>
+    </div>
+  </footer>
+
+  <!-- Main Script -->
+  <script type="module" src="main.js"></script>
+</body>
+</html>
