@@ -65,6 +65,7 @@ export const CONFIG = {
     TEAM_FINANCE: 'https://www.team.finance/view-coin',
     UNCX: 'https://uncx.network/amms',
     BIRDEYE: 'https://birdeye.so/token',
+    PUMPFUN: 'https://pump.fun/profile',
     SOLSCAN: 'https://solscan.io',
     ETHERSCAN: 'https://etherscan.io',
     BSCSCAN: 'https://bscscan.com',

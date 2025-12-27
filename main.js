@@ -403,7 +403,7 @@ function renderDevAnalysis(pair, token) {
     setElementText('devTrustScore', 'Unverified');
 
     // Dev Coin History metrics
-    setElementText('devOtherCoins', 'Check Explorer');
+    setElementText('devOtherCoins', pair.chainId === 'solana' ? 'Check Pump.fun' : 'Check Explorer');
     setElementText('devRugHistory', 'Unknown');
     setElementText('devSuccessRate', 'Unverified');
 
@@ -414,6 +414,16 @@ function renderDevAnalysis(pair, token) {
     // Dev other tokens link
     const devTokensLink = document.getElementById('devTokensLink');
     devTokensLink.href = getExplorerTokensLink(pair.chainId, token.address);
+
+    // Pump.fun link (Solana only)
+    const pumpfunLink = document.getElementById('pumpfunLink');
+    if (pair.chainId === 'solana') {
+        pumpfunLink.href = `${CONFIG.EXTERNAL.PUMPFUN}/${token.address}`;
+        pumpfunLink.style.display = 'inline-flex';
+    } else {
+        // Hide Pump.fun button for non-Solana tokens
+        pumpfunLink.style.display = 'none';
+    }
 }
 
 /**
