@@ -14,7 +14,6 @@ import {
     validateInput,
     calculateRiskAnalysis,
     analyzeSentiment,
-    generatePredictions,
     generateVerdict
 } from './utils.js';
 
@@ -157,7 +156,7 @@ function renderTokenData(pair, aggregated) {
     priceChangeEl.classList.remove('positive', 'negative');
     priceChangeEl.classList.add(priceChange >= 0 ? 'positive' : 'negative');
 
-    setElementText('totalSupply', 'N/A'); // Not available from Dexscreener
+    setElementText('totalSupply', 'Unverified Contract Data');
 
     // 3. On-Chain & Trading Metrics
     const buys = pair.txns?.h24?.buys || 0;
@@ -190,20 +189,14 @@ function renderTokenData(pair, aggregated) {
     if (sentiment.trendDirection === 'Bullish') trendEl.classList.add('positive');
     else if (sentiment.trendDirection === 'Bearish') trendEl.classList.add('negative');
 
-    // 5. 6-Month Price Prediction
-    const predictions = generatePredictions(pair);
+    // 5. 24-Hour Momentum Score
+    renderMomentumScore(pair, sentiment);
 
-    setElementText('bullishPrice', `${formatPrice(predictions.bullish.priceRange.low)} - ${formatPrice(predictions.bullish.priceRange.high)}`);
-    setElementText('bullishMcap', `${formatCurrency(predictions.bullish.marketCapRange.low)} - ${formatCurrency(predictions.bullish.marketCapRange.high)}`);
-
-    setElementText('neutralPrice', `${formatPrice(predictions.neutral.priceRange.low)} - ${formatPrice(predictions.neutral.priceRange.high)}`);
-    setElementText('neutralMcap', `${formatCurrency(predictions.neutral.marketCapRange.low)} - ${formatCurrency(predictions.neutral.marketCapRange.high)}`);
-
-    setElementText('bearishPrice', `${formatPrice(predictions.bearish.priceRange.low)} - ${formatPrice(predictions.bearish.priceRange.high)}`);
-    setElementText('bearishMcap', `${formatCurrency(predictions.bearish.marketCapRange.low)} - ${formatCurrency(predictions.bearish.marketCapRange.high)}`);
-
-    // 6. Risk Analysis
+    // 6. Risk Analysis - calculate first so we can use in Trust vs Hype
     const risks = calculateRiskAnalysis(pair);
+
+    // Trust vs Hype Analysis
+    renderTrustVsHype(pair, sentiment, risks);
 
     // Overall risk score
     const riskScoreEl = document.getElementById('overallRiskScore');
@@ -263,6 +256,124 @@ function renderTokenData(pair, aggregated) {
 
     // 11. Smart Money
     renderSmartMoney(pair, sentiment);
+}
+
+/**
+ * Render 24-Hour Momentum Score
+ */
+function renderMomentumScore(pair, sentiment) {
+    // Calculate momentum score (0-100)
+    const volume24h = pair.volume?.h24 || 0;
+    const txns24h = (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0);
+    const buys = pair.txns?.h24?.buys || 0;
+    const sells = pair.txns?.h24?.sells || 0;
+    const priceChange = pair.priceChange?.h24 || 0;
+
+    // Score components
+    let volumeScore = Math.min(30, Math.log10(volume24h + 1) * 5);
+    let txScore = Math.min(25, Math.log10(txns24h + 1) * 8);
+    let buyPressureScore = sells > 0 ? Math.min(25, (buys / sells) * 10) : 15;
+    let momentumScore = priceChange > 0 ? Math.min(20, priceChange * 0.5) : Math.max(-10, priceChange * 0.3);
+
+    let totalScore = Math.round(Math.max(0, Math.min(100, volumeScore + txScore + buyPressureScore + momentumScore + 25)));
+
+    // Update UI
+    document.getElementById('momentumScore').textContent = totalScore;
+    document.getElementById('momentumIndicator').style.left = `${totalScore}%`;
+
+    // Momentum label
+    let label = 'LOW MOMENTUM';
+    let color = '#ff4444';
+    if (totalScore >= 70) { label = 'HIGH MOMENTUM 🚀'; color = '#00ff88'; }
+    else if (totalScore >= 50) { label = 'MODERATE'; color = '#ffaa00'; }
+    else if (totalScore >= 30) { label = 'LOW MOMENTUM'; color = '#ff8844'; }
+    else { label = 'DUMP RISK 📉'; color = '#ff4444'; }
+
+    const labelEl = document.getElementById('momentumLabel');
+    labelEl.textContent = label;
+    labelEl.style.color = color;
+    document.getElementById('momentumScore').style.color = color;
+
+    // Volume surge
+    const volumeChange = pair.volume?.h24 && pair.volume?.h6 ?
+        Math.round(((pair.volume.h24 / 4) / (pair.volume.h6 || 1) - 1) * 100) : 0;
+    const surgEl = document.getElementById('volumeSurge');
+    surgEl.textContent = volumeChange >= 0 ? `+${volumeChange}%` : `${volumeChange}%`;
+    surgEl.classList.remove('positive', 'negative');
+    surgEl.classList.add(volumeChange >= 0 ? 'positive' : 'negative');
+
+    // Buy pressure
+    const ratio = sells > 0 ? buys / sells : buys;
+    const pressureEl = document.getElementById('buyPressure');
+    pressureEl.textContent = ratio > 1.5 ? 'Strong Buy' : ratio < 0.7 ? 'Sell Heavy' : 'Neutral';
+    pressureEl.classList.remove('positive', 'negative', 'warning');
+    pressureEl.classList.add(ratio > 1.5 ? 'positive' : ratio < 0.7 ? 'negative' : 'warning');
+
+    // Whale activity
+    setElementText('momentumWhales', sentiment.whaleActivity);
+
+    // Moon probability
+    const moonEl = document.getElementById('moonProbability');
+    const moonProb = totalScore >= 70 ? 'High' : totalScore >= 50 ? 'Moderate' : 'Low';
+    moonEl.textContent = moonProb;
+    moonEl.classList.remove('positive', 'negative', 'warning');
+    moonEl.classList.add(moonProb === 'High' ? 'positive' : moonProb === 'Low' ? 'negative' : 'warning');
+}
+
+/**
+ * Render Trust vs Hype Analysis
+ */
+function renderTrustVsHype(pair, sentiment, risks) {
+    // THE TRUTH (Left side)
+    setElementText('trustLiqLock', 'Unverified');
+    setElementText('trustRenounced', pair.chainId === 'solana' ? 'N/A (Solana)' : 'Unverified');
+
+    const top10Pct = risks.holderConcentration.level === 'HIGH' ? 60 :
+        risks.holderConcentration.level === 'MEDIUM' ? 35 : 20;
+    const top10El = document.getElementById('trustTop10');
+    top10El.textContent = `~${top10Pct}%`;
+    top10El.classList.remove('positive', 'negative', 'warning');
+    top10El.classList.add(top10Pct > 50 ? 'negative' : top10Pct > 30 ? 'warning' : 'positive');
+
+    // Token age
+    const pairCreatedAt = pair.pairCreatedAt;
+    if (pairCreatedAt) {
+        const ageDays = Math.floor((Date.now() - pairCreatedAt) / (1000 * 60 * 60 * 24));
+        let ageText = ageDays < 1 ? '< 1 day ⚠️' : ageDays < 7 ? `${ageDays} days` :
+            ageDays < 30 ? `${Math.floor(ageDays / 7)} weeks` : `${Math.floor(ageDays / 30)} months`;
+        const ageEl = document.getElementById('trustAge');
+        ageEl.textContent = ageText;
+        ageEl.classList.remove('positive', 'negative', 'warning');
+        ageEl.classList.add(ageDays < 3 ? 'negative' : ageDays < 14 ? 'warning' : 'positive');
+    }
+
+    // THE HYPE (Right side)
+    const socialLinks = pair.info?.socials || [];
+    const socialCount = socialLinks.length + (pair.info?.websites?.length || 0);
+    setElementText('hypeSocial', socialCount > 0 ? `${socialCount} links` : 'None found');
+
+    // Volume trend
+    const hypeVolEl = document.getElementById('hypeVolume');
+    hypeVolEl.textContent = sentiment.volumeTrend;
+    hypeVolEl.classList.remove('positive', 'negative', 'warning');
+    hypeVolEl.classList.add(sentiment.volumeTrend === 'Increasing' ? 'positive' :
+        sentiment.volumeTrend === 'Decreasing' ? 'negative' : 'warning');
+
+    // AI Sentiment
+    const sentimentEl = document.getElementById('hypeSentiment');
+    sentimentEl.textContent = sentiment.trendDirection;
+    sentimentEl.classList.remove('positive', 'negative', 'warning');
+    sentimentEl.classList.add(sentiment.trendDirection === 'Bullish' ? 'positive' :
+        sentiment.trendDirection === 'Bearish' ? 'negative' : 'warning');
+
+    // Hype score (reuse calculation)
+    const volume24h = pair.volume?.h24 || 0;
+    const txns24h = (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0);
+    let hypeScore = Math.min(100, Math.round((Math.log10(volume24h + 1) * 10) + (Math.log10(txns24h + 1) * 15)));
+    const hypeScoreEl = document.getElementById('hypeScoreSmall');
+    hypeScoreEl.textContent = `${hypeScore}/100`;
+    hypeScoreEl.classList.remove('positive', 'negative', 'warning');
+    hypeScoreEl.classList.add(hypeScore >= 70 ? 'positive' : hypeScore >= 40 ? 'warning' : 'negative');
 }
 
 /**
