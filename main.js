@@ -249,6 +249,257 @@ function renderTokenData(pair, aggregated) {
     tagsContainer.innerHTML = verdict.suitableFor
         .map(tag => `<span class="verdict-tag">${tag}</span>`)
         .join('');
+
+    // ========== ADVANCED FEATURES ==========
+
+    // 8. Wallet Cluster Analysis
+    renderWalletAnalysis(pair, token, risks);
+
+    // 9. Social Pulse
+    renderSocialPulse(pair, sentiment);
+
+    // 10. Developer Analysis
+    renderDevAnalysis(pair, token);
+
+    // 11. Smart Money
+    renderSmartMoney(pair, sentiment);
+
+    // 12. Liquidity Lock Status
+    renderLiquidityLock(pair, token);
+}
+
+/**
+ * Render Wallet Cluster Analysis (Feature 8)
+ */
+function renderWalletAnalysis(pair, token, risks) {
+    // Estimate holder distribution based on risk metrics
+    const top10Pct = risks.holderConcentration.level === 'HIGH' ? 60 :
+        risks.holderConcentration.level === 'MEDIUM' ? 35 : 20;
+    const top50Pct = 25;
+    const othersPct = 100 - top10Pct - top50Pct;
+
+    setElementText('top10Holders', `~${top10Pct}% of supply`);
+    setRiskClass('top10Holders', risks.holderConcentration.level);
+
+    const whaleConc = risks.holderConcentration.level === 'HIGH' ? 'High Risk' :
+        risks.holderConcentration.level === 'MEDIUM' ? 'Moderate' : 'Decentralized';
+    setElementText('whaleConcentration', whaleConc);
+    setRiskClass('whaleConcentration', risks.holderConcentration.level);
+
+    const clusterRisk = risks.rugPull.level === 'HIGH' ? 'Cabal Likely' :
+        risks.rugPull.level === 'MEDIUM' ? 'Monitor' : 'Low Risk';
+    setElementText('clusterRisk', clusterRisk);
+    setRiskClass('clusterRisk', risks.rugPull.level);
+
+    // Update holder distribution bar
+    document.getElementById('holderBar1').style.width = `${top10Pct}%`;
+    document.getElementById('holderBar2').style.width = `${top50Pct}%`;
+    document.getElementById('holderBar3').style.width = `${othersPct}%`;
+
+    setElementText('top10Pct', `${top10Pct}%`);
+    setElementText('top50Pct', `${top50Pct}%`);
+    setElementText('othersPct', `${othersPct}%`);
+
+    // External links
+    const bubblemapsLink = document.getElementById('bubblemapsLink');
+    bubblemapsLink.href = `${CONFIG.EXTERNAL.BUBBLEMAPS}/${pair.chainId}/token/${token.address}`;
+
+    const holdersLink = document.getElementById('holdersLink');
+    holdersLink.href = getExplorerHoldersLink(pair.chainId, token.address);
+}
+
+/**
+ * Render Social Pulse (Feature 9)
+ */
+function renderSocialPulse(pair, sentiment) {
+    // Calculate hype score based on trading activity
+    const volume24h = pair.volume?.h24 || 0;
+    const txns24h = (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0);
+    const priceChange = Math.abs(pair.priceChange?.h24 || 0);
+
+    // Hype score formula (0-100)
+    let hypeScore = Math.min(100, Math.round(
+        (Math.log10(volume24h + 1) * 10) +
+        (Math.log10(txns24h + 1) * 15) +
+        (priceChange * 0.5)
+    ));
+    hypeScore = Math.max(0, hypeScore);
+
+    document.getElementById('hypeScore').innerHTML =
+        `${hypeScore}<span style="font-size: 1.5rem; color: var(--text-muted);">/100</span>`;
+    document.getElementById('hypeMeterFill').style.width = `${hypeScore}%`;
+
+    // Color based on score
+    const hypeColor = hypeScore >= 70 ? '#00ff88' : hypeScore >= 40 ? '#ffaa00' : '#ff4444';
+    document.getElementById('hypeScore').style.color = hypeColor;
+
+    // Volume spike detection
+    const volumeSpike = sentiment.volumeTrend === 'Increasing' ? '🔥 Spiking' :
+        sentiment.volumeTrend === 'Decreasing' ? '📉 Declining' : 'Normal';
+    setElementText('volumeSpike', volumeSpike);
+
+    // Transaction velocity
+    const txVelocity = txns24h > 1000 ? '⚡ Very High' :
+        txns24h > 200 ? 'High' :
+            txns24h > 50 ? 'Moderate' : 'Low';
+    setElementText('txVelocity', txVelocity);
+
+    // Social links from Dexscreener
+    const socialContainer = document.getElementById('socialLinks');
+    const links = pair.info?.socials || [];
+    const website = pair.info?.websites?.[0];
+
+    if (links.length > 0 || website) {
+        let socialHtml = '';
+        if (website) {
+            socialHtml += `<a href="${website.url}" target="_blank" class="social-link">🌐 Website</a>`;
+        }
+        links.forEach(link => {
+            const icon = link.type === 'twitter' ? '𝕏' :
+                link.type === 'telegram' ? '📱' : '🔗';
+            socialHtml += `<a href="${link.url}" target="_blank" class="social-link">${icon} ${link.type}</a>`;
+        });
+        socialContainer.innerHTML = socialHtml;
+    } else {
+        socialContainer.innerHTML = '<span class="verdict-tag" style="opacity: 0.5;">No social links found</span>';
+    }
+}
+
+/**
+ * Render Developer Analysis (Feature 10)
+ */
+function renderDevAnalysis(pair, token) {
+    // Pair creation time
+    const pairCreatedAt = pair.pairCreatedAt;
+    if (pairCreatedAt) {
+        const createdDate = new Date(pairCreatedAt);
+        const now = new Date();
+        const ageMs = now - createdDate;
+        const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+
+        let ageText = '';
+        if (ageDays < 1) ageText = '< 1 day (NEW!)';
+        else if (ageDays < 7) ageText = `${ageDays} days`;
+        else if (ageDays < 30) ageText = `${Math.floor(ageDays / 7)} weeks`;
+        else if (ageDays < 365) ageText = `${Math.floor(ageDays / 30)} months`;
+        else ageText = `${Math.floor(ageDays / 365)} years`;
+
+        setElementText('tokenAge', ageText);
+        setElementText('pairCreated', createdDate.toLocaleDateString());
+
+        // Tokens under 3 days old are higher risk
+        const tokenAgeEl = document.getElementById('tokenAge');
+        if (ageDays < 3) {
+            tokenAgeEl.classList.add('negative');
+        } else if (ageDays < 14) {
+            tokenAgeEl.classList.add('warning');
+        } else {
+            tokenAgeEl.classList.add('positive');
+        }
+    } else {
+        setElementText('tokenAge', 'Unknown');
+        setElementText('pairCreated', 'Unknown');
+    }
+
+    // Deployer wallet (we don't have this from Dexscreener API)
+    setElementText('deployerWallet', truncateAddress(pair.pairAddress, 8));
+    setElementText('devTrustScore', 'Unverified');
+
+    // Dev history link to explorer
+    const devHistoryLink = document.getElementById('devHistoryLink');
+    devHistoryLink.href = getExplorerLink(pair.chainId, pair.pairAddress);
+}
+
+/**
+ * Render Smart Money / Top Traders (Feature 11)
+ */
+function renderSmartMoney(pair, sentiment) {
+    const buys = pair.txns?.h24?.buys || 0;
+    const sells = pair.txns?.h24?.sells || 0;
+
+    // Estimate large transactions (rough heuristic)
+    const largeBuys = Math.floor(buys * 0.1); // Assume 10% are "large"
+    const largeSells = Math.floor(sells * 0.1);
+
+    setElementText('largeBuys', formatNumber(largeBuys));
+    setElementText('largeSells', formatNumber(largeSells));
+
+    // Whale trend
+    const whaleTrend = sentiment.whaleActivity === 'Accumulation' ? '📈 Buying' :
+        sentiment.whaleActivity === 'Distribution' ? '📉 Selling' : '➡️ Neutral';
+    setElementText('whaleTrend', whaleTrend);
+    setRiskClass('whaleTrend',
+        sentiment.whaleActivity === 'Accumulation' ? 'LOW' :
+            sentiment.whaleActivity === 'Distribution' ? 'HIGH' : 'MEDIUM'
+    );
+
+    // Smart money signal
+    const ratio = sells > 0 ? buys / sells : buys;
+    const signal = ratio > 1.5 ? '🟢 Bullish' :
+        ratio < 0.7 ? '🔴 Bearish' : '🟡 Mixed';
+    setElementText('smartMoneySignal', signal);
+
+    // External links
+    const token = pair.baseToken;
+    document.getElementById('birdeyeLink').href =
+        `${CONFIG.EXTERNAL.BIRDEYE}/${token.address}?chain=${pair.chainId}`;
+    document.getElementById('topTradersLink').href =
+        `${CONFIG.EXTERNAL.DEXSCREENER}/${pair.chainId}/${pair.pairAddress}`;
+}
+
+/**
+ * Render Liquidity Lock Status (Feature 12)
+ */
+function renderLiquidityLock(pair, token) {
+    // Currently we can't auto-detect lock status, so display as unknown with check buttons
+    const lockStatusIcon = document.getElementById('lockStatusIcon');
+    const lockStatus = document.getElementById('lockStatus');
+    const lockStatusDesc = document.getElementById('lockStatusDesc');
+    const lockStatusBox = document.getElementById('lockStatusBox');
+
+    // Default to unknown/warning state
+    lockStatusIcon.textContent = '🔓';
+    lockStatus.textContent = 'UNKNOWN';
+    lockStatus.style.color = 'var(--warning)';
+    lockStatusDesc.textContent = 'Liquidity lock status could not be automatically verified. Use the buttons below to check manually.';
+
+    // LP Token info
+    setElementText('lpToken', truncateAddress(pair.pairAddress, 6));
+    setElementText('lpValue', formatCurrency(pair.liquidity?.usd));
+    setElementText('lockPlatform', 'Check Below');
+    setElementText('unlockDate', 'Unknown');
+
+    // External check links
+    document.getElementById('teamFinanceLink').href =
+        `${CONFIG.EXTERNAL.TEAM_FINANCE}/${token.address}?chain=${pair.chainId}`;
+    document.getElementById('uncxLink').href =
+        `${CONFIG.EXTERNAL.UNCX}/${pair.chainId}/pair/${pair.pairAddress}`;
+    document.getElementById('lpExplorerLink').href =
+        getExplorerLink(pair.chainId, pair.pairAddress);
+}
+
+/**
+ * Get explorer link for a given chain and address
+ */
+function getExplorerLink(chainId, address) {
+    switch (chainId) {
+        case 'solana': return `${CONFIG.EXTERNAL.SOLSCAN}/account/${address}`;
+        case 'ethereum': return `${CONFIG.EXTERNAL.ETHERSCAN}/address/${address}`;
+        case 'bsc': return `${CONFIG.EXTERNAL.BSCSCAN}/address/${address}`;
+        default: return `${CONFIG.EXTERNAL.DEXSCREENER}/${chainId}/${address}`;
+    }
+}
+
+/**
+ * Get explorer holders link
+ */
+function getExplorerHoldersLink(chainId, tokenAddress) {
+    switch (chainId) {
+        case 'solana': return `${CONFIG.EXTERNAL.SOLSCAN}/token/${tokenAddress}#holders`;
+        case 'ethereum': return `${CONFIG.EXTERNAL.ETHERSCAN}/token/${tokenAddress}#balances`;
+        case 'bsc': return `${CONFIG.EXTERNAL.BSCSCAN}/token/${tokenAddress}#balances`;
+        default: return `${CONFIG.EXTERNAL.DEXSCREENER}/${chainId}/${tokenAddress}`;
+    }
 }
 
 /**

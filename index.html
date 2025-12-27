@@ -1,22 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crypto AI Agent | Professional Memecoin Analyzer</title>
-  <meta name="description" content="Professional AI-powered memecoin analyzer using live data from Dexscreener and Axiom Exchange. Get real-time market data, risk analysis, and price predictions.">
-  
+  <meta name="description"
+    content="Professional AI-powered memecoin analyzer using live data from Dexscreener and Axiom Exchange. Get real-time market data, risk analysis, and price predictions.">
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+
   <!-- Styles -->
   <link rel="stylesheet" href="index.css">
-  
+
   <!-- Favicon -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
 </head>
+
 <body>
   <!-- Header -->
   <header class="header">
@@ -38,21 +44,15 @@
           Analysis Terminal
         </h1>
         <p class="hero-subtitle">
-          Get real-time market data, on-chain metrics, risk analysis, and 6-month predictions 
+          Get real-time market data, on-chain metrics, risk analysis, and 6-month predictions
           powered by Dexscreener & Axiom Exchange data.
         </p>
-        
+
         <!-- Search Box -->
         <div class="search-container">
           <form class="search-box" id="searchForm">
-            <input 
-              type="text" 
-              class="search-input" 
-              id="tokenInput"
-              placeholder="Enter token ticker (e.g. WIF) or contract address..."
-              autocomplete="off"
-              spellcheck="false"
-            >
+            <input type="text" class="search-input" id="tokenInput"
+              placeholder="Enter token ticker (e.g. WIF) or contract address..." autocomplete="off" spellcheck="false">
             <button type="submit" class="search-btn" id="analyzeBtn">
               <span>🔍</span>
               <span>Analyze</span>
@@ -86,7 +86,7 @@
     <section class="results-section" id="resultsSection">
       <div class="container">
         <div class="section-grid">
-          
+
           <!-- 1. Token Identification -->
           <div class="card" id="tokenCard">
             <div class="token-header">
@@ -223,7 +223,7 @@
               <div class="card-icon">🔮</div>
               <h3 class="card-title">6-Month Price Prediction (SPECULATIVE)</h3>
             </div>
-            
+
             <div class="prediction-grid">
               <!-- Bullish -->
               <div class="prediction-card bullish">
@@ -234,7 +234,7 @@
                   Market Cap: <span id="bullishMcap">$0 - $0</span>
                 </p>
               </div>
-              
+
               <!-- Neutral -->
               <div class="prediction-card neutral">
                 <div class="prediction-icon">⚖️</div>
@@ -244,7 +244,7 @@
                   Market Cap: <span id="neutralMcap">$0 - $0</span>
                 </p>
               </div>
-              
+
               <!-- Bearish -->
               <div class="prediction-card bearish">
                 <div class="prediction-icon">📉</div>
@@ -263,9 +263,9 @@
                 MANDATORY DISCLAIMER
               </div>
               <p class="disclaimer-text">
-                <strong>This is NOT financial advice.</strong> Predictions are speculative and based on 
-                historical data, market behavior, and on-chain indicators. Cryptocurrency markets are 
-                highly volatile and unpredictable. Never invest more than you can afford to lose. 
+                <strong>This is NOT financial advice.</strong> Predictions are speculative and based on
+                historical data, market behavior, and on-chain indicators. Cryptocurrency markets are
+                highly volatile and unpredictable. Never invest more than you can afford to lose.
                 Always do your own research (DYOR) before making any investment decisions.
               </p>
             </div>
@@ -277,11 +277,11 @@
               <div class="card-icon">🛡️</div>
               <h3 class="card-title">Risk Analysis</h3>
             </div>
-            
+
             <div class="risk-score" id="overallRiskScore">
               5<span>/10</span>
             </div>
-            
+
             <div style="margin-top: 1.5rem;">
               <div class="data-item" style="margin-bottom: 1rem;">
                 <div class="data-label">Rug Pull Risk</div>
@@ -290,7 +290,7 @@
                   <div class="risk-meter-fill medium" id="rugPullMeter"></div>
                 </div>
               </div>
-              
+
               <div class="data-item" style="margin-bottom: 1rem;">
                 <div class="data-label">Liquidity Risk</div>
                 <div class="data-value" id="liquidityRisk">Medium</div>
@@ -298,7 +298,7 @@
                   <div class="risk-meter-fill medium" id="liquidityMeter"></div>
                 </div>
               </div>
-              
+
               <div class="data-item" style="margin-bottom: 1rem;">
                 <div class="data-label">Holder Concentration Risk</div>
                 <div class="data-value" id="holderRisk">Medium</div>
@@ -306,7 +306,7 @@
                   <div class="risk-meter-fill medium" id="holderMeter"></div>
                 </div>
               </div>
-              
+
               <div class="data-item">
                 <div class="data-label">Volatility Risk</div>
                 <div class="data-value" id="volatilityRisk">Medium</div>
@@ -323,7 +323,7 @@
               <div class="card-icon">🧠</div>
               <h3 class="card-title">Final AI Verdict</h3>
             </div>
-            
+
             <div class="verdict-box">
               <div class="verdict-header">
                 <div class="verdict-icon" id="verdictIcon">⚖️</div>
@@ -332,11 +332,12 @@
                   <div class="data-value" id="projectStrength" style="font-size: 1.25rem;">Moderate</div>
                 </div>
               </div>
-              
+
               <p class="verdict-text" id="verdictSummary">
-                This token shows mixed signals with moderate risk levels. Further analysis recommended before any investment decisions.
+                This token shows mixed signals with moderate risk levels. Further analysis recommended before any
+                investment decisions.
               </p>
-              
+
               <div style="margin-top: 1rem;">
                 <div class="data-label">Best Suited For:</div>
                 <div class="verdict-tags" id="suitableTags">
@@ -344,6 +345,231 @@
                   <span class="verdict-tag">High-risk memecoin investors</span>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- ========== ADVANCED FEATURES ========== -->
+
+          <!-- 8. Wallet Cluster Analysis (Bubble Maps) -->
+          <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-header">
+              <div class="card-icon">🗺️</div>
+              <h3 class="card-title">Wallet Cluster Analysis</h3>
+            </div>
+
+            <div class="data-grid" style="grid-template-columns: repeat(3, 1fr);">
+              <div class="data-item">
+                <div class="data-label">Top 10 Holders</div>
+                <div class="data-value warning" id="top10Holders">Calculating...</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Whale Concentration</div>
+                <div class="data-value" id="whaleConcentration">Unknown</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Cluster Risk</div>
+                <div class="data-value" id="clusterRisk">Unknown</div>
+              </div>
+            </div>
+
+            <!-- Holder Distribution Bar -->
+            <div style="margin-top: 1.5rem;">
+              <div class="data-label" style="margin-bottom: 0.5rem;">Holder Distribution</div>
+              <div class="holder-bar"
+                style="display: flex; height: 24px; border-radius: 6px; overflow: hidden; background: var(--bg-glass);">
+                <div id="holderBar1" style="background: linear-gradient(90deg, #ff4444, #ff6666); width: 30%;"
+                  title="Top 1-10 Holders"></div>
+                <div id="holderBar2" style="background: linear-gradient(90deg, #ffaa00, #ffcc00); width: 20%;"
+                  title="Top 11-50 Holders"></div>
+                <div id="holderBar3" style="background: linear-gradient(90deg, #00ff88, #00cc66); width: 50%;"
+                  title="Other Holders"></div>
+              </div>
+              <div
+                style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">
+                <span>🔴 Top 10: <span id="top10Pct">30%</span></span>
+                <span>🟡 Top 11-50: <span id="top50Pct">20%</span></span>
+                <span>🟢 Others: <span id="othersPct">50%</span></span>
+              </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <a href="#" target="_blank" id="bubblemapsLink" class="action-btn">
+                🗺️ View Bubble Map
+              </a>
+              <a href="#" target="_blank" id="holdersLink" class="action-btn secondary">
+                👥 View All Holders
+              </a>
+            </div>
+          </div>
+
+          <!-- 9. Social Pulse -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">📱</div>
+              <h3 class="card-title">Social Pulse</h3>
+            </div>
+
+            <!-- Hype Score Meter -->
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+              <div class="data-label">Hype Score</div>
+              <div class="hype-score" id="hypeScore"
+                style="font-size: 3rem; font-weight: 700; color: var(--accent-primary);">
+                65<span style="font-size: 1.5rem; color: var(--text-muted);">/100</span>
+              </div>
+              <div class="hype-meter"
+                style="height: 10px; background: var(--bg-glass); border-radius: 5px; margin-top: 0.5rem; overflow: hidden;">
+                <div id="hypeMeterFill"
+                  style="height: 100%; width: 65%; background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary)); border-radius: 5px;">
+                </div>
+              </div>
+            </div>
+
+            <div class="data-grid">
+              <div class="data-item">
+                <div class="data-label">Volume Spike</div>
+                <div class="data-value" id="volumeSpike">Normal</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Tx Velocity</div>
+                <div class="data-value" id="txVelocity">Moderate</div>
+              </div>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+              <div class="data-label" style="margin-bottom: 0.5rem;">Social Links</div>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;" id="socialLinks">
+                <span class="verdict-tag" style="opacity: 0.5;">No social links found</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 10. Developer Analysis -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">👤</div>
+              <h3 class="card-title">Developer Analysis</h3>
+            </div>
+
+            <div class="data-grid">
+              <div class="data-item">
+                <div class="data-label">Deployer Wallet</div>
+                <div class="data-value mono" id="deployerWallet" style="font-size: 0.85rem;">Unknown</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Token Age</div>
+                <div class="data-value" id="tokenAge">Unknown</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Pair Created</div>
+                <div class="data-value" id="pairCreated">Unknown</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Dev Trust Score</div>
+                <div class="data-value warning" id="devTrustScore">Unverified</div>
+              </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <a href="#" target="_blank" id="devHistoryLink" class="action-btn secondary">
+                🔍 View Dev History
+              </a>
+            </div>
+          </div>
+
+          <!-- 11. Smart Money / Top Traders -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">💰</div>
+              <h3 class="card-title">Smart Money</h3>
+            </div>
+
+            <div class="data-grid">
+              <div class="data-item">
+                <div class="data-label">Large Buys (24h)</div>
+                <div class="data-value positive" id="largeBuys">0</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Large Sells (24h)</div>
+                <div class="data-value negative" id="largeSells">0</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Whale Trend</div>
+                <div class="data-value" id="whaleTrend">Neutral</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Smart Money Signal</div>
+                <div class="data-value" id="smartMoneySignal">Neutral</div>
+              </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <a href="#" target="_blank" id="birdeyeLink" class="action-btn">
+                🦅 View on Birdeye
+              </a>
+              <a href="#" target="_blank" id="topTradersLink" class="action-btn secondary">
+                📊 Top Traders
+              </a>
+            </div>
+          </div>
+
+          <!-- 12. Liquidity Lock Verification -->
+          <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-header">
+              <div class="card-icon">🔒</div>
+              <h3 class="card-title">Liquidity Lock Status</h3>
+            </div>
+
+            <div class="lock-status-box" id="lockStatusBox"
+              style="text-align: center; padding: 2rem; background: var(--bg-glass); border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+              <div id="lockStatusIcon" style="font-size: 3rem; margin-bottom: 0.5rem;">🔓</div>
+              <div id="lockStatus" style="font-size: 1.5rem; font-weight: 700; color: var(--warning);">UNKNOWN</div>
+              <p id="lockStatusDesc" style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.9rem;">
+                Liquidity lock status could not be automatically verified. Use the buttons below to check manually.
+              </p>
+            </div>
+
+            <div class="data-grid" style="grid-template-columns: repeat(4, 1fr);">
+              <div class="data-item">
+                <div class="data-label">LP Token</div>
+                <div class="data-value mono" id="lpToken" style="font-size: 0.85rem;">-</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Liquidity Value</div>
+                <div class="data-value" id="lpValue">$0</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Lock Platform</div>
+                <div class="data-value" id="lockPlatform">Unknown</div>
+              </div>
+              <div class="data-item">
+                <div class="data-label">Unlock Date</div>
+                <div class="data-value" id="unlockDate">Unknown</div>
+              </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;">
+              <a href="#" target="_blank" id="teamFinanceLink" class="action-btn">
+                🔒 Check on Team.Finance
+              </a>
+              <a href="#" target="_blank" id="uncxLink" class="action-btn">
+                🔐 Check on UNCX
+              </a>
+              <a href="#" target="_blank" id="lpExplorerLink" class="action-btn secondary">
+                🔍 View LP on Explorer
+              </a>
+            </div>
+
+            <div class="disclaimer"
+              style="margin-top: 1.5rem; background: rgba(255, 68, 68, 0.1); border-color: var(--danger);">
+              <div class="disclaimer-title" style="color: var(--danger);">
+                <span>⚠️</span>
+                CRITICAL WARNING
+              </div>
+              <p class="disclaimer-text">
+                <strong>"Unknown" liquidity lock = HIGH RISK.</strong> Always verify lock status manually before
+                investing.
+                Unverified locks are a major red flag for potential rug pulls.
+              </p>
             </div>
           </div>
 
@@ -369,4 +595,5 @@
   <!-- Main Script -->
   <script type="module" src="main.js"></script>
 </body>
+
 </html>

@@ -61,6 +61,13 @@ export const CONFIG = {
   EXTERNAL: {
     DEXSCREENER: 'https://dexscreener.com',
     AXIOM: 'https://axiom.trade',
+    BUBBLEMAPS: 'https://app.bubblemaps.io',
+    TEAM_FINANCE: 'https://www.team.finance/view-coin',
+    UNCX: 'https://uncx.network/amms',
+    BIRDEYE: 'https://birdeye.so/token',
+    SOLSCAN: 'https://solscan.io',
+    ETHERSCAN: 'https://etherscan.io',
+    BSCSCAN: 'https://bscscan.com',
   }
 };
 
