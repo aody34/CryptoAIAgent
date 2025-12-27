@@ -263,9 +263,6 @@ function renderTokenData(pair, aggregated) {
 
     // 11. Smart Money
     renderSmartMoney(pair, sentiment);
-
-    // 12. Liquidity Lock Status
-    renderLiquidityLock(pair, token);
 }
 
 /**
@@ -405,9 +402,18 @@ function renderDevAnalysis(pair, token) {
     setElementText('deployerWallet', truncateAddress(pair.pairAddress, 8));
     setElementText('devTrustScore', 'Unverified');
 
-    // Dev history link to explorer
+    // Dev Coin History metrics
+    setElementText('devOtherCoins', 'Check Explorer');
+    setElementText('devRugHistory', 'Unknown');
+    setElementText('devSuccessRate', 'Unverified');
+
+    // Dev history links to explorer
     const devHistoryLink = document.getElementById('devHistoryLink');
     devHistoryLink.href = getExplorerLink(pair.chainId, pair.pairAddress);
+
+    // Dev other tokens link
+    const devTokensLink = document.getElementById('devTokensLink');
+    devTokensLink.href = getExplorerTokensLink(pair.chainId, token.address);
 }
 
 /**
@@ -448,37 +454,6 @@ function renderSmartMoney(pair, sentiment) {
 }
 
 /**
- * Render Liquidity Lock Status (Feature 12)
- */
-function renderLiquidityLock(pair, token) {
-    // Currently we can't auto-detect lock status, so display as unknown with check buttons
-    const lockStatusIcon = document.getElementById('lockStatusIcon');
-    const lockStatus = document.getElementById('lockStatus');
-    const lockStatusDesc = document.getElementById('lockStatusDesc');
-    const lockStatusBox = document.getElementById('lockStatusBox');
-
-    // Default to unknown/warning state
-    lockStatusIcon.textContent = '🔓';
-    lockStatus.textContent = 'UNKNOWN';
-    lockStatus.style.color = 'var(--warning)';
-    lockStatusDesc.textContent = 'Liquidity lock status could not be automatically verified. Use the buttons below to check manually.';
-
-    // LP Token info
-    setElementText('lpToken', truncateAddress(pair.pairAddress, 6));
-    setElementText('lpValue', formatCurrency(pair.liquidity?.usd));
-    setElementText('lockPlatform', 'Check Below');
-    setElementText('unlockDate', 'Unknown');
-
-    // External check links
-    document.getElementById('teamFinanceLink').href =
-        `${CONFIG.EXTERNAL.TEAM_FINANCE}/${token.address}?chain=${pair.chainId}`;
-    document.getElementById('uncxLink').href =
-        `${CONFIG.EXTERNAL.UNCX}/${pair.chainId}/pair/${pair.pairAddress}`;
-    document.getElementById('lpExplorerLink').href =
-        getExplorerLink(pair.chainId, pair.pairAddress);
-}
-
-/**
  * Get explorer link for a given chain and address
  */
 function getExplorerLink(chainId, address) {
@@ -498,6 +473,18 @@ function getExplorerHoldersLink(chainId, tokenAddress) {
         case 'solana': return `${CONFIG.EXTERNAL.SOLSCAN}/token/${tokenAddress}#holders`;
         case 'ethereum': return `${CONFIG.EXTERNAL.ETHERSCAN}/token/${tokenAddress}#balances`;
         case 'bsc': return `${CONFIG.EXTERNAL.BSCSCAN}/token/${tokenAddress}#balances`;
+        default: return `${CONFIG.EXTERNAL.DEXSCREENER}/${chainId}/${tokenAddress}`;
+    }
+}
+
+/**
+ * Get explorer tokens link for dev wallet
+ */
+function getExplorerTokensLink(chainId, tokenAddress) {
+    switch (chainId) {
+        case 'solana': return `${CONFIG.EXTERNAL.SOLSCAN}/token/${tokenAddress}#txs`;
+        case 'ethereum': return `${CONFIG.EXTERNAL.ETHERSCAN}/token/${tokenAddress}`;
+        case 'bsc': return `${CONFIG.EXTERNAL.BSCSCAN}/token/${tokenAddress}`;
         default: return `${CONFIG.EXTERNAL.DEXSCREENER}/${chainId}/${tokenAddress}`;
     }
 }
