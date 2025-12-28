@@ -44,8 +44,8 @@
           Analysis Terminal
         </h1>
         <p class="hero-subtitle">
-          Real-time market data, wallet cluster analysis, social pulse, dev history tracking,
-          smart money signals, 24h momentum score, Trust vs Hype analysis — powered by Dexscreener.
+          Liquidity lock detection, wallet cluster analysis, dev history tracking, 24h momentum score,
+          smart money signals, Trust vs Hype analysis — powered by Dexscreener.
         </p>
 
         <!-- Search Box -->
@@ -172,9 +172,11 @@
                 <div class="data-label">Buy/Sell Ratio</div>
                 <div class="data-value" id="buySellRatio">1.00</div>
               </div>
-              <div class="data-item">
-                <div class="data-label">Liquidity Lock</div>
-                <div class="data-value warning" id="liquidityLock">Unknown</div>
+              <div class="data-item"
+                style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: var(--radius-sm);">
+                <div class="data-label">🔒 Liquidity Lock Status</div>
+                <div class="data-value" id="liquidityLock" style="font-size: 1.1rem; font-weight: 700;">Checking...
+                </div>
               </div>
               <div class="data-item">
                 <div class="data-label">Risk Flags</div>

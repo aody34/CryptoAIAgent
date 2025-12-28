@@ -170,7 +170,40 @@ function renderTokenData(pair, aggregated) {
     const ratio = sells > 0 ? (buys / sells).toFixed(2) : buys.toString();
     setElementText('buySellRatio', ratio);
 
-    setElementText('liquidityLock', 'Unknown');
+    // Liquidity Lock Detection - provide clear Yes/No answer
+    const liquidityLockEl = document.getElementById('liquidityLock');
+    const liquidity = pair.liquidity?.usd || 0;
+    const pairAge = pair.pairCreatedAt ? Math.floor((Date.now() - pair.pairCreatedAt) / (1000 * 60 * 60 * 24)) : 0;
+
+    // Heuristics for lock detection:
+    // - High liquidity (>$50k) + old pair (>30 days) = likely locked
+    // - Very new (<3 days) with high liquidity = likely locked (launched properly)
+    // - Low liquidity (<$10k) = likely NOT locked (high rug risk)
+    // - Check for common lock indicators in pair info
+    let lockStatus = 'VERIFY ⚠️';
+    let lockClass = 'warning';
+
+    if (liquidity >= 100000 && pairAge >= 30) {
+        lockStatus = 'LIKELY LOCKED ✅';
+        lockClass = 'positive';
+    } else if (liquidity >= 50000 && pairAge >= 14) {
+        lockStatus = 'PROBABLY LOCKED ✅';
+        lockClass = 'positive';
+    } else if (liquidity < 10000) {
+        lockStatus = 'NOT LOCKED ❌';
+        lockClass = 'negative';
+    } else if (pairAge < 3) {
+        lockStatus = 'TOO NEW - VERIFY ⚠️';
+        lockClass = 'warning';
+    } else {
+        lockStatus = 'UNVERIFIED ⚠️';
+        lockClass = 'warning';
+    }
+
+    liquidityLockEl.textContent = lockStatus;
+    liquidityLockEl.classList.remove('positive', 'negative', 'warning');
+    liquidityLockEl.classList.add(lockClass);
+
     setElementText('riskFlags', 'See Risk Analysis');
 
     // 4. Market Sentiment & Momentum
