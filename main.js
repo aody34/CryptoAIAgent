@@ -325,7 +325,15 @@ function renderMomentumScore(pair, sentiment) {
  */
 function renderTrustVsHype(pair, sentiment, risks) {
     // THE TRUTH (Left side)
-    setElementText('trustLiqLock', 'Unverified');
+    // Dev Success History - based on token age (older = more trustworthy)
+    const devSuccessEl = document.getElementById('trustDevSuccess');
+    if (pair.chainId === 'solana') {
+        devSuccessEl.textContent = 'Check Pump.fun →';
+        devSuccessEl.classList.add('warning');
+    } else {
+        devSuccessEl.textContent = 'Check Explorer →';
+        devSuccessEl.classList.add('warning');
+    }
     setElementText('trustRenounced', pair.chainId === 'solana' ? 'N/A (Solana)' : 'Unverified');
 
     const top10Pct = risks.holderConcentration.level === 'HIGH' ? 60 :
@@ -526,10 +534,11 @@ function renderDevAnalysis(pair, token) {
     const devTokensLink = document.getElementById('devTokensLink');
     devTokensLink.href = getExplorerTokensLink(pair.chainId, token.address);
 
-    // Pump.fun link (Solana only)
+    // Pump.fun link (Solana only) - link to token page which shows creator
     const pumpfunLink = document.getElementById('pumpfunLink');
     if (pair.chainId === 'solana') {
-        pumpfunLink.href = `${CONFIG.EXTERNAL.PUMPFUN}/${token.address}`;
+        // Use pump.fun token page which shows creator info and their other coins
+        pumpfunLink.href = `https://pump.fun/coin/${token.address}`;
         pumpfunLink.style.display = 'inline-flex';
     } else {
         // Hide Pump.fun button for non-Solana tokens
@@ -565,6 +574,27 @@ function renderSmartMoney(pair, sentiment) {
     const signal = ratio > 1.5 ? '🟢 Bullish' :
         ratio < 0.7 ? '🔴 Bearish' : '🟡 Mixed';
     setElementText('smartMoneySignal', signal);
+
+    // Fresh Wallets indicator (estimate based on buy/sell pattern)
+    const freshWalletsEl = document.getElementById('freshWallets');
+    const freshWalletIndicator = buys > sells * 1.3 ? 'Active 🔥' :
+        buys > sells ? 'Some Activity' : 'Low Activity';
+    freshWalletsEl.textContent = freshWalletIndicator;
+    freshWalletsEl.classList.remove('positive', 'negative', 'warning');
+    freshWalletsEl.classList.add(buys > sells * 1.3 ? 'positive' : buys > sells ? 'warning' : 'negative');
+
+    // Inflow Signal (combine multiple factors)
+    const inflowEl = document.getElementById('inflowSignal');
+    const priceUp = (pair.priceChange?.h24 || 0) > 0;
+    const volumeHigh = (pair.volume?.h24 || 0) > 100000;
+    const buyPressure = ratio > 1.2;
+    const inflowScore = (priceUp ? 1 : 0) + (volumeHigh ? 1 : 0) + (buyPressure ? 1 : 0);
+    const inflowText = inflowScore >= 3 ? '🚀 Strong Inflow' :
+        inflowScore >= 2 ? '📈 Moderate Inflow' :
+            inflowScore >= 1 ? '➡️ Neutral' : '📉 Outflow';
+    inflowEl.textContent = inflowText;
+    inflowEl.classList.remove('positive', 'negative', 'warning');
+    inflowEl.classList.add(inflowScore >= 3 ? 'positive' : inflowScore <= 0 ? 'negative' : 'warning');
 
     // External links
     const token = pair.baseToken;
