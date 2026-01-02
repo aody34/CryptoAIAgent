@@ -1,5 +1,6 @@
 // ===========================================
-// CRYPTO AI AGENT - CONFIGURATION
+// MEMERADAR PROFINDER - CONFIGURATION
+// AI-Powered Memecoin Intelligence
 // ===========================================
 
 export const CONFIG = {
