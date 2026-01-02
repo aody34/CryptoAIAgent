@@ -1,5 +1,5 @@
 // ===========================================
-// CRYPTO AI AGENT - CONFIGURATION
+// MEMERADAR - CONFIGURATION
 // ===========================================
 
 export const CONFIG = {

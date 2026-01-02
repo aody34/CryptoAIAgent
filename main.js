@@ -1,5 +1,5 @@
 // ===========================================
-// CRYPTO AI AGENT - MAIN APPLICATION
+// MEMERADAR - MAIN APPLICATION
 // Professional Memecoin Analyzer
 // ===========================================
 
@@ -752,5 +752,5 @@ tokenInput.addEventListener('focus', () => {
 });
 
 // Add some example tokens for easy testing
-console.log('%c🤖 Crypto AI Agent Loaded', 'color: #00ff88; font-size: 16px; font-weight: bold;');
+console.log('%c🤖 MemeRadar Loaded', 'color: #00ff88; font-size: 16px; font-weight: bold;');
 console.log('%cTry searching for: WIF, BONK, POPCAT, or any Solana memecoin ticker', 'color: #a0a0b0;');

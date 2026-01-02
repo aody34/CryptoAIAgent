@@ -1,4 +1,4 @@
-# Crypto AI Agent 🤖
+# MemeRadar 🤖
 
 Professional AI-powered memecoin analyzer using live data from **Dexscreener** and **Axiom Exchange**.
 

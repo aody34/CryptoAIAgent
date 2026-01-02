@@ -1,5 +1,5 @@
 // ===========================================
-// CRYPTO AI AGENT - API SERVICE
+// MEMERADAR - API SERVICE
 // Dexscreener Integration
 // ===========================================
 

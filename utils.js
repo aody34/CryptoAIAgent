@@ -1,5 +1,5 @@
 // ===========================================
-// CRYPTO AI AGENT - UTILITY FUNCTIONS
+// MEMERADAR - UTILITY FUNCTIONS
 // ===========================================
 
 import { CONFIG, RISK_LEVELS } from './config.js';
