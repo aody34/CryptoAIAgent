@@ -1,6 +1,6 @@
 // ===========================================
-// MEMERADAR PROFINDER - MAIN APPLICATION
-// AI-Powered Memecoin Intelligence
+// CRYPTO AI AGENT - MAIN APPLICATION
+// Professional Memecoin Analyzer
 // ===========================================
 
 import { DexscreenerAPI, findBestPair, getAxiomLink, getDexscreenerLink, aggregatePairData } from './api.js';
@@ -163,9 +163,6 @@ function renderTokenData(pair, aggregated) {
     const sells = pair.txns?.h24?.sells || 0;
     const totalTxns = aggregated?.totalBuys24h + aggregated?.totalSells24h || buys + sells;
 
-    // ProFinder Intelligence Scores
-    renderProFinder(pair, sentiment);
-
     setElementText('txCount24h', formatNumber(totalTxns));
     setElementText('buys24h', formatNumber(aggregated?.totalBuys24h || buys));
     setElementText('sells24h', formatNumber(aggregated?.totalSells24h || sells));
@@ -292,72 +289,6 @@ function renderTokenData(pair, aggregated) {
 
     // 11. Smart Money
     renderSmartMoney(pair, sentiment);
-}
-
-/**
- * Render ProFinder Intelligence Scores
- */
-function renderProFinder(pair, sentiment) {
-    const buys = pair.txns?.h24?.buys || 0;
-    const sells = pair.txns?.h24?.sells || 0;
-    const volume24h = pair.volume?.h24 || 0;
-    const liquidity = pair.liquidity?.usd || 0;
-    const priceChange = pair.priceChange?.h24 || 0;
-    const pairAge = pair.pairCreatedAt ? Math.floor((Date.now() - pair.pairCreatedAt) / (1000 * 60 * 60 * 24)) : 0;
-
-    // Calculate Skill Score (0-100)
-    // Based on: volume, liquidity depth, buy/sell balance, token age
-    let skillScore = 25; // Base
-    skillScore += Math.min(25, Math.log10(volume24h + 1) * 5);
-    skillScore += Math.min(20, Math.log10(liquidity + 1) * 4);
-    skillScore += buys > sells ? Math.min(15, (buys / Math.max(1, sells)) * 5) : 0;
-    skillScore += Math.min(15, pairAge * 0.5);
-    skillScore = Math.round(Math.max(0, Math.min(100, skillScore)));
-
-    // Calculate Luck Score (0-100)
-    // High luck = high volatility + recent pump
-    let luckScore = 30;
-    luckScore += Math.min(40, Math.abs(priceChange) * 0.5);
-    luckScore += pairAge < 7 ? 20 : pairAge < 30 ? 10 : 0;
-    luckScore += volume24h > 500000 ? 10 : 0;
-    luckScore = Math.round(Math.max(0, Math.min(100, luckScore)));
-
-    // Calculate Consistency Score (0-100)
-    // Based on: steady volume, balanced trades, age
-    let consistencyScore = 20;
-    const ratio = sells > 0 ? buys / sells : 1;
-    consistencyScore += ratio >= 0.8 && ratio <= 1.5 ? 30 : ratio >= 0.5 && ratio <= 2 ? 15 : 0;
-    consistencyScore += pairAge >= 30 ? 25 : pairAge >= 7 ? 15 : 5;
-    consistencyScore += liquidity >= 50000 ? 25 : liquidity >= 10000 ? 15 : 5;
-    consistencyScore = Math.round(Math.max(0, Math.min(100, consistencyScore)));
-
-    // Update UI
-    setElementText('skillScore', skillScore);
-    setElementText('luckScore', luckScore);
-    setElementText('consistencyScore', consistencyScore);
-
-    // Early Entry Rate (heuristic based on age)
-    const earlyRate = pairAge < 3 ? '95%+' : pairAge < 7 ? '80%+' : pairAge < 30 ? '50%' : '< 20%';
-    const earlyEl = document.getElementById('earlyEntryRate');
-    earlyEl.textContent = earlyRate;
-    earlyEl.classList.remove('positive', 'negative', 'warning');
-    earlyEl.classList.add(pairAge < 7 ? 'positive' : pairAge < 30 ? 'warning' : 'negative');
-
-    // Win Rate (simulated based on metrics)
-    const winRate = skillScore >= 70 ? '75%' : skillScore >= 50 ? '55%' : '35%';
-    setElementText('winRate30d', winRate);
-
-    // Smart Money Signal
-    const smartSignalEl = document.getElementById('smartSignal');
-    const smartSignal = buys > sells * 1.3 ? '🟢 Accumulating' : sells > buys * 1.3 ? '🔴 Distributing' : '🟡 Mixed';
-    smartSignalEl.textContent = smartSignal;
-
-    // Source Credibility
-    const credibilityEl = document.getElementById('sourceCredibility');
-    const credScore = skillScore >= 70 ? 'High' : skillScore >= 50 ? 'Medium' : 'Low';
-    credibilityEl.textContent = credScore;
-    credibilityEl.classList.remove('positive', 'negative', 'warning');
-    credibilityEl.classList.add(skillScore >= 70 ? 'positive' : skillScore >= 50 ? 'warning' : 'negative');
 }
 
 /**
