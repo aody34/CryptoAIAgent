@@ -682,10 +682,24 @@ async function analyzeToken(query) {
 
     try {
         // Search for the token
-        const result = await api.searchToken(query);
+        let result = await api.searchToken(query);
+
+        // If no results and query looks like a contract address, try direct lookup
+        if ((!result.pairs || result.pairs.length === 0) && query.length >= 32) {
+            console.log('Search failed, trying direct contract lookup on Solana...');
+            try {
+                // Try Solana token pairs endpoint directly
+                const directResult = await api.getTokenPairs('solana', query);
+                if (directResult && Array.isArray(directResult) && directResult.length > 0) {
+                    result = { pairs: directResult };
+                }
+            } catch (directError) {
+                console.log('Direct lookup also failed:', directError.message);
+            }
+        }
 
         if (!result.pairs || result.pairs.length === 0) {
-            showError('❌ Token not found on Dexscreener or Axiom Exchange. Please check the ticker or contract address.');
+            showError('❌ Token not found. This may be a very new launch not yet indexed. Try again in a few minutes or verify the contract address.');
             return;
         }
 
