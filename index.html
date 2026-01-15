@@ -8,6 +8,15 @@
   <meta name="description"
     content="Professional AI-powered memecoin analyzer using live data from Dexscreener and Axiom Exchange. Get real-time market data, risk analysis, and price predictions.">
 
+  <!-- Open Graph / Social Sharing -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="MemeRadar | Professional Memecoin Analyzer">
+  <meta property="og:description" content="AI-powered memecoin analysis with live data, risk scores, and verdicts.">
+  <meta property="og:url" content="https://memeradar.website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MemeRadar | Professional Memecoin Analyzer">
+  <meta name="twitter:description" content="Check out the MemeRadar AI verdict on this token!">
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,6 +33,34 @@
 </head>
 
 <body>
+  <!-- Fresh Pairs Sidebar -->
+  <aside class="fresh-pairs-sidebar" id="freshPairsSidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">
+        <span class="pulse-dot"></span>
+        <span>Fresh Pairs</span>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+        <span>◀</span>
+      </button>
+    </div>
+    <div class="sidebar-subtitle">New Solana Pools • Auto-refreshes</div>
+    <div class="fresh-pairs-list" id="freshPairsList">
+      <div class="fresh-pairs-loading">
+        <div class="loading-spinner small"></div>
+        <span>Loading...</span>
+      </div>
+    </div>
+    <button class="sidebar-refresh" id="sidebarRefresh">
+      🔄 Refresh Now
+    </button>
+  </aside>
+
+  <!-- Mobile Sidebar Toggle -->
+  <button class="mobile-sidebar-btn" id="mobileSidebarBtn" aria-label="Open fresh pairs">
+    🔥
+  </button>
+
   <!-- Header -->
   <header class="header">
     <div class="container header-content">
@@ -61,6 +98,11 @@
           <p class="search-hint">
             ⚠️ Only memecoins on Dexscreener & Axiom Exchange • No BTC/ETH/Large Caps
           </p>
+        </div>
+
+        <!-- Trending Section (Default View) -->
+        <div class="trending-section" id="trendingSection">
+          <!-- Populated by JavaScript -->
         </div>
       </div>
     </section>
@@ -112,6 +154,10 @@
                 <div class="data-label">View on</div>
                 <div class="data-value" style="color: var(--accent-primary);">Axiom ↗</div>
               </a>
+              <button class="share-btn" id="shareBtn" title="Copy shareable link">
+                <span>📋</span>
+                <span>Share</span>
+              </button>
             </div>
           </div>
 
@@ -144,7 +190,7 @@
               </div>
               <div class="data-item">
                 <div class="data-label">Circulating Supply</div>
-                <div class="data-value" id="totalSupply">Unverified</div>
+                <div class="data-value" id="totalSupply">Data Pending ⏳</div>
               </div>
             </div>
           </div>
@@ -175,12 +221,12 @@
               <div class="data-item"
                 style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: var(--radius-sm);">
                 <div class="data-label">🔒 Liquidity Lock Status</div>
-                <div class="data-value" id="liquidityLock" style="font-size: 1.1rem; font-weight: 700;">Checking...
+                <div class="data-value" id="liquidityLock" style="font-size: 1.1rem; font-weight: 700;">Data Pending ⏳
                 </div>
               </div>
               <div class="data-item">
                 <div class="data-label">Risk Flags</div>
-                <div class="data-value" id="riskFlags">Checking...</div>
+                <div class="data-value" id="riskFlags">See Risk Analysis</div>
               </div>
             </div>
           </div>
@@ -256,8 +302,8 @@
                     <div class="data-value" id="momentumWhales">Neutral</div>
                   </div>
                   <div class="data-item">
-                    <div class="data-label">Moon Probability</div>
-                    <div class="data-value" id="moonProbability">Low</div>
+                    <div class="data-label">Momentum Strength</div>
+                    <div class="data-value" id="momentumStrength">Moderate</div>
                   </div>
                 </div>
 
@@ -265,9 +311,9 @@
                 <div style="margin-top: 1rem;">
                   <div
                     style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">
-                    <span>🐻 Dump</span>
-                    <span>➡️ Neutral</span>
-                    <span>🚀 Moon</span>
+                    <span>🐻 Weak</span>
+                    <span>➡️ Moderate</span>
+                    <span>🚀 Strong</span>
                   </div>
                   <div
                     style="height: 12px; background: linear-gradient(90deg, #ff4444, #ffaa00 50%, #00ff88); border-radius: 6px; position: relative;">
@@ -280,7 +326,7 @@
             </div>
 
             <p style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
-              ⚠️ Momentum score based on volume spikes, buy/sell ratio, and whale activity. Not a price prediction.
+              ⚠️ Momentum score based on volume spikes, buy/sell ratio, and whale activity. Data-driven analysis only.
             </p>
           </div>
 
@@ -303,11 +349,11 @@
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                   <div class="data-item">
                     <div class="data-label">Dev Success History</div>
-                    <div class="data-value" id="trustDevSuccess">Check Pump.fun</div>
+                    <div class="data-value" id="trustDevSuccess">Data Pending ⏳</div>
                   </div>
                   <div class="data-item">
                     <div class="data-label">Contract Renounced</div>
-                    <div class="data-value" id="trustRenounced">Unknown</div>
+                    <div class="data-value" id="trustRenounced">N/A (Solana)</div>
                   </div>
                   <div class="data-item">
                     <div class="data-label">Top 10 Holder %</div>
@@ -315,7 +361,7 @@
                   </div>
                   <div class="data-item">
                     <div class="data-label">Token Age</div>
-                    <div class="data-value" id="trustAge">Unknown</div>
+                    <div class="data-value" id="trustAge">Data Pending ⏳</div>
                   </div>
                 </div>
               </div>
@@ -331,7 +377,7 @@
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                   <div class="data-item">
                     <div class="data-label">Social Mentions</div>
-                    <div class="data-value" id="hypeSocial">Unknown</div>
+                    <div class="data-value" id="hypeSocial">Data Pending ⏳</div>
                   </div>
                   <div class="data-item">
                     <div class="data-label">Volume Trend</div>
@@ -443,11 +489,11 @@
               </div>
               <div class="data-item">
                 <div class="data-label">Whale Concentration</div>
-                <div class="data-value" id="whaleConcentration">Unknown</div>
+                <div class="data-value" id="whaleConcentration">Data Pending ⏳</div>
               </div>
               <div class="data-item">
                 <div class="data-label">Cluster Risk</div>
-                <div class="data-value" id="clusterRisk">Unknown</div>
+                <div class="data-value" id="clusterRisk">Data Pending ⏳</div>
               </div>
             </div>
 
@@ -532,19 +578,21 @@
             <div class="data-grid" style="grid-template-columns: repeat(4, 1fr);">
               <div class="data-item">
                 <div class="data-label">Deployer Wallet</div>
-                <div class="data-value mono" id="deployerWallet" style="font-size: 0.85rem;">Unknown</div>
+                <div class="data-value mono" id="deployerWallet" style="font-size: 0.85rem;">Data Pending ⏳</div>
               </div>
               <div class="data-item">
                 <div class="data-label">Token Age</div>
-                <div class="data-value" id="tokenAge">Unknown</div>
+                <div class="data-value" id="tokenAge">Data Pending ⏳</div>
               </div>
               <div class="data-item">
                 <div class="data-label">Pair Created</div>
-                <div class="data-value" id="pairCreated">Unknown</div>
+                <div class="data-value" id="pairCreated">Data Pending ⏳</div>
               </div>
               <div class="data-item">
                 <div class="data-label">Dev Trust Score</div>
-                <div class="data-value warning" id="devTrustScore">Unverified</div>
+                <div class="data-value" id="devTrustScore">
+                  <span class="dev-badge-container"></span>
+                </div>
               </div>
             </div>
 
@@ -555,19 +603,19 @@
               <div class="data-grid" style="grid-template-columns: repeat(3, 1fr);">
                 <div class="data-item">
                   <div class="data-label">Other Coins Launched</div>
-                  <div class="data-value warning" id="devOtherCoins">Check Explorer</div>
+                  <div class="data-value warning" id="devOtherCoins">Data Pending ⏳</div>
                 </div>
                 <div class="data-item">
                   <div class="data-label">Rug History</div>
-                  <div class="data-value" id="devRugHistory">Unknown</div>
+                  <div class="data-value" id="devRugHistory">Data Pending ⏳</div>
                 </div>
                 <div class="data-item">
                   <div class="data-label">Success Rate</div>
-                  <div class="data-value" id="devSuccessRate">Unverified</div>
+                  <div class="data-value" id="devSuccessRate">Data Pending ⏳</div>
                 </div>
               </div>
               <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
-                ⚠️ Always check the developer's wallet history on the blockchain explorer to verify past launches.
+                ⚠️ Click "Check Dev" to fetch live data from Solscan.
               </p>
             </div>
 
@@ -575,8 +623,11 @@
               <a href="#" target="_blank" id="pumpfunLink" class="action-btn">
                 🚀 View on Pump.fun
               </a>
+              <button id="checkDevBtn" class="action-btn">
+                🔍 Check Dev
+              </button>
               <a href="#" target="_blank" id="devHistoryLink" class="action-btn secondary">
-                🔍 Dev Wallet History
+                📜 Dev Wallet History
               </a>
               <a href="#" target="_blank" id="devTokensLink" class="action-btn secondary">
                 🪙 Dev's Other Tokens
@@ -610,7 +661,7 @@
               </div>
               <div class="data-item">
                 <div class="data-label">Fresh Wallets Buying</div>
-                <div class="data-value" id="freshWallets">Unknown</div>
+                <div class="data-value" id="freshWallets">Data Pending ⏳</div>
               </div>
               <div class="data-item">
                 <div class="data-label">Inflow Signal</div>
@@ -646,6 +697,12 @@
       </p>
     </div>
   </footer>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <span class="toast-icon">✓</span>
+    <span class="toast-message" id="toastMessage">Link copied!</span>
+  </div>
 
   <!-- Main Script -->
   <script type="module" src="main.js"></script>

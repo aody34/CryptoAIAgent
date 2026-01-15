@@ -16,9 +16,17 @@ import {
     analyzeSentiment,
     generateVerdict
 } from './utils.js';
+import { FreshPairsManager } from './freshPairs.js';
+import { TrendingManager } from './trending.js';
+import { DevChecker } from './devChecker.js';
+import { URLRouter } from './router.js';
 
-// Initialize API
+// Initialize API and modules
 const api = new DexscreenerAPI();
+const freshPairs = new FreshPairsManager();
+const trending = new TrendingManager();
+const devChecker = new DevChecker();
+const router = new URLRouter();
 
 // DOM Elements
 const searchForm = document.getElementById('searchForm');
@@ -28,9 +36,200 @@ const loadingState = document.getElementById('loadingState');
 const errorState = document.getElementById('errorState');
 const errorMessage = document.getElementById('errorMessage');
 const resultsSection = document.getElementById('resultsSection');
+const trendingSection = document.getElementById('trendingSection');
+const freshPairsList = document.getElementById('freshPairsList');
+const shareBtn = document.getElementById('shareBtn');
+const checkDevBtn = document.getElementById('checkDevBtn');
+const toast = document.getElementById('toast');
+
+// Sidebar elements
+const sidebar = document.getElementById('freshPairsSidebar');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const sidebarRefresh = document.getElementById('sidebarRefresh');
+const mobileSidebarBtn = document.getElementById('mobileSidebarBtn');
 
 // State
 let currentTokenData = null;
+
+/**
+ * Initialize the application
+ */
+function init() {
+    // Initialize Fresh Pairs sidebar
+    freshPairs.init(freshPairsList, (address) => {
+        tokenInput.value = address;
+        analyzeToken(address);
+    });
+
+    // Initialize trending section
+    trending.init(trendingSection, (address) => {
+        tokenInput.value = address;
+        analyzeToken(address);
+    });
+
+    // Initialize URL router
+    router.init((token) => {
+        tokenInput.value = token;
+        analyzeToken(token);
+    });
+
+    // Setup sidebar toggle
+    setupSidebar();
+
+    // Setup share button
+    setupShareButton();
+
+    // Setup dev check button
+    setupDevCheckButton();
+}
+
+/**
+ * Setup sidebar functionality
+ */
+function setupSidebar() {
+    // Toggle sidebar on desktop
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            sidebarToggle.querySelector('span').textContent =
+                sidebar.classList.contains('collapsed') ? '▶' : '◀';
+        });
+    }
+
+    // Mobile sidebar toggle
+    if (mobileSidebarBtn) {
+        mobileSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('mobile-open');
+        });
+    }
+
+    // Refresh button
+    if (sidebarRefresh) {
+        sidebarRefresh.addEventListener('click', () => {
+            freshPairs.refresh();
+        });
+    }
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768) {
+            if (!sidebar.contains(e.target) && !mobileSidebarBtn.contains(e.target)) {
+                sidebar.classList.remove('mobile-open');
+            }
+        }
+    });
+}
+
+/**
+ * Setup share button functionality
+ */
+function setupShareButton() {
+    if (shareBtn) {
+        shareBtn.addEventListener('click', async () => {
+            const success = await router.copyShareLink();
+            if (success) {
+                showToast('Link copied! Share it on X 🚀');
+            }
+        });
+    }
+}
+
+/**
+ * Setup dev check button functionality
+ */
+function setupDevCheckButton() {
+    if (checkDevBtn) {
+        checkDevBtn.addEventListener('click', async () => {
+            if (!currentTokenData) return;
+
+            checkDevBtn.disabled = true;
+            checkDevBtn.innerHTML = '⏳ Checking...';
+
+            try {
+                const analysis = await devChecker.analyzeDevWallet(
+                    currentTokenData.pair.baseToken.address,
+                    currentTokenData.pair.chainId
+                );
+
+                updateDevAnalysisUI(analysis);
+            } catch (error) {
+                console.error('Dev check error:', error);
+            } finally {
+                checkDevBtn.disabled = false;
+                checkDevBtn.innerHTML = '🔍 Check Dev';
+            }
+        });
+    }
+}
+
+/**
+ * Update dev analysis UI with fetched data
+ */
+function updateDevAnalysisUI(analysis) {
+    const devTrustEl = document.getElementById('devTrustScore');
+    const devOtherCoins = document.getElementById('devOtherCoins');
+    const devRugHistory = document.getElementById('devRugHistory');
+    const devSuccessRate = document.getElementById('devSuccessRate');
+    const deployerWallet = document.getElementById('deployerWallet');
+    const devHistoryLink = document.getElementById('devHistoryLink');
+
+    // Update badge
+    if (analysis.badge) {
+        const badgeColor = {
+            positive: '#00ff88',
+            warning: '#ffaa00',
+            negative: '#ff4444'
+        }[analysis.badgeClass] || '#ffaa00';
+
+        devTrustEl.innerHTML = `<span class="dev-badge" style="color: ${badgeColor}; border-color: ${badgeColor};">${analysis.badge}</span>`;
+    }
+
+    // Update other fields
+    if (analysis.deployerWallet) {
+        deployerWallet.textContent = truncateAddress(analysis.deployerWallet, 6);
+        if (devHistoryLink) {
+            devHistoryLink.href = analysis.solscanLink || '#';
+        }
+    }
+
+    if (analysis.otherTokens !== undefined) {
+        devOtherCoins.textContent = analysis.otherTokens;
+    }
+
+    if (analysis.rugCount !== undefined) {
+        devRugHistory.textContent = analysis.rugCount;
+        if (analysis.rugCount !== 'Unknown' && parseInt(analysis.rugCount) > 0) {
+            devRugHistory.classList.add('negative');
+        }
+    }
+
+    if (analysis.successRate !== undefined) {
+        devSuccessRate.textContent = analysis.successRate;
+    }
+
+    // Show message if available
+    if (analysis.message) {
+        showToast(analysis.message);
+    }
+}
+
+/**
+ * Show toast notification
+ */
+function showToast(message) {
+    if (!toast) return;
+
+    const toastMessage = document.getElementById('toastMessage');
+    if (toastMessage) {
+        toastMessage.textContent = message;
+    }
+
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
 
 /**
  * Show loading state
@@ -39,6 +238,7 @@ function showLoading() {
     loadingState.classList.add('active');
     errorState.classList.remove('active');
     resultsSection.classList.remove('active');
+    trendingSection.style.display = 'none';
     analyzeBtn.disabled = true;
 }
 
@@ -59,6 +259,7 @@ function showError(message) {
     errorMessage.textContent = message;
     errorState.classList.add('active');
     resultsSection.classList.remove('active');
+    trendingSection.style.display = 'block';
 }
 
 /**
@@ -68,6 +269,7 @@ function showResults() {
     hideLoading();
     errorState.classList.remove('active');
     resultsSection.classList.add('active');
+    trendingSection.style.display = 'none';
 }
 
 /**
@@ -116,6 +318,9 @@ function setRiskMeter(id, level) {
 function renderTokenData(pair, aggregated) {
     const token = pair.baseToken;
 
+    // Update URL with token info
+    router.updateURL(token.address, token.name, token.symbol);
+
     // 1. Token Identification
     const tokenImage = document.getElementById('tokenImage');
     if (pair.info?.imageUrl) {
@@ -156,7 +361,7 @@ function renderTokenData(pair, aggregated) {
     priceChangeEl.classList.remove('positive', 'negative');
     priceChangeEl.classList.add(priceChange >= 0 ? 'positive' : 'negative');
 
-    setElementText('totalSupply', 'Unverified Contract Data');
+    setElementText('totalSupply', 'See Solscan');
 
     // 3. On-Chain & Trading Metrics
     const buys = pair.txns?.h24?.buys || 0;
@@ -196,7 +401,7 @@ function renderTokenData(pair, aggregated) {
         lockStatus = 'TOO NEW - VERIFY ⚠️';
         lockClass = 'warning';
     } else {
-        lockStatus = 'UNVERIFIED ⚠️';
+        lockStatus = 'VERIFY ON SOLSCAN ⚠️';
         lockClass = 'warning';
     }
 
@@ -315,12 +520,12 @@ function renderMomentumScore(pair, sentiment) {
     document.getElementById('momentumIndicator').style.left = `${totalScore}%`;
 
     // Momentum label
-    let label = 'LOW MOMENTUM';
+    let label = 'WEAK';
     let color = '#ff4444';
-    if (totalScore >= 70) { label = 'HIGH MOMENTUM 🚀'; color = '#00ff88'; }
+    if (totalScore >= 70) { label = 'STRONG 🚀'; color = '#00ff88'; }
     else if (totalScore >= 50) { label = 'MODERATE'; color = '#ffaa00'; }
-    else if (totalScore >= 30) { label = 'LOW MOMENTUM'; color = '#ff8844'; }
-    else { label = 'DUMP RISK 📉'; color = '#ff4444'; }
+    else if (totalScore >= 30) { label = 'WEAK'; color = '#ff8844'; }
+    else { label = 'VERY WEAK 📉'; color = '#ff4444'; }
 
     const labelEl = document.getElementById('momentumLabel');
     labelEl.textContent = label;
@@ -345,12 +550,12 @@ function renderMomentumScore(pair, sentiment) {
     // Whale activity
     setElementText('momentumWhales', sentiment.whaleActivity);
 
-    // Moon probability
-    const moonEl = document.getElementById('moonProbability');
-    const moonProb = totalScore >= 70 ? 'High' : totalScore >= 50 ? 'Moderate' : 'Low';
-    moonEl.textContent = moonProb;
-    moonEl.classList.remove('positive', 'negative', 'warning');
-    moonEl.classList.add(moonProb === 'High' ? 'positive' : moonProb === 'Low' ? 'negative' : 'warning');
+    // Momentum Strength (renamed from Moon Probability)
+    const strengthEl = document.getElementById('momentumStrength');
+    const strengthText = totalScore >= 70 ? 'Strong' : totalScore >= 50 ? 'Moderate' : 'Weak';
+    strengthEl.textContent = strengthText;
+    strengthEl.classList.remove('positive', 'negative', 'warning');
+    strengthEl.classList.add(strengthText === 'Strong' ? 'positive' : strengthText === 'Weak' ? 'negative' : 'warning');
 }
 
 /**
@@ -361,13 +566,13 @@ function renderTrustVsHype(pair, sentiment, risks) {
     // Dev Success History - based on token age (older = more trustworthy)
     const devSuccessEl = document.getElementById('trustDevSuccess');
     if (pair.chainId === 'solana') {
-        devSuccessEl.textContent = 'Check Pump.fun →';
+        devSuccessEl.textContent = 'Click "Check Dev" →';
         devSuccessEl.classList.add('warning');
     } else {
         devSuccessEl.textContent = 'Check Explorer →';
         devSuccessEl.classList.add('warning');
     }
-    setElementText('trustRenounced', pair.chainId === 'solana' ? 'N/A (Solana)' : 'Unverified');
+    setElementText('trustRenounced', pair.chainId === 'solana' ? 'N/A (Solana)' : 'Check Explorer');
 
     const top10Pct = risks.holderConcentration.level === 'HIGH' ? 60 :
         risks.holderConcentration.level === 'MEDIUM' ? 35 : 20;
@@ -550,14 +755,16 @@ function renderDevAnalysis(pair, token) {
         setElementText('pairCreated', 'Unknown');
     }
 
-    // Deployer wallet (we don't have this from Dexscreener API)
-    setElementText('deployerWallet', truncateAddress(pair.pairAddress, 8));
-    setElementText('devTrustScore', 'Unverified');
+    // Deployer wallet (will be populated by dev check)
+    setElementText('deployerWallet', 'Click "Check Dev"');
 
-    // Dev Coin History metrics
-    setElementText('devOtherCoins', pair.chainId === 'solana' ? 'Check Pump.fun' : 'Check Explorer');
-    setElementText('devRugHistory', 'Unknown');
-    setElementText('devSuccessRate', 'Unverified');
+    // Reset dev check fields
+    const devTrustEl = document.getElementById('devTrustScore');
+    devTrustEl.innerHTML = '<span class="dev-badge" style="color: #ffaa00; border-color: #ffaa00;">Click Check Dev</span>';
+
+    setElementText('devOtherCoins', 'Click "Check Dev"');
+    setElementText('devRugHistory', 'Click "Check Dev"');
+    setElementText('devSuccessRate', 'Click "Check Dev"');
 
     // Dev history links to explorer
     const devHistoryLink = document.getElementById('devHistoryLink');
@@ -764,6 +971,9 @@ searchForm.addEventListener('submit', async (e) => {
 tokenInput.addEventListener('focus', () => {
     errorState.classList.remove('active');
 });
+
+// Initialize app
+init();
 
 // Add some example tokens for easy testing
 console.log('%c🤖 MemeRadar Loaded', 'color: #00ff88; font-size: 16px; font-weight: bold;');
