@@ -112,17 +112,23 @@
       </div>
     </section>
 
-    <!-- Loading State (Skeleton Loaders) -->
+    <!-- Loading State with Progress Bar -->
     <div class="loading" id="loadingState">
       <div class="container">
-        <div class="skeleton-grid">
-          <div class="skeleton skeleton-card"></div>
-          <div class="skeleton skeleton-card"></div>
-          <div class="skeleton skeleton-card"></div>
-          <div class="skeleton skeleton-card"></div>
+        <div class="loading-content">
+          <div class="loading-icon">🔍</div>
+          <p class="loading-text" id="loadingText">Analyzing token...</p>
+          <div class="progress-bar-container">
+            <div class="progress-bar" id="loadingProgress" style="width: 0%"></div>
+          </div>
+          <p class="loading-hint">Checking Dexscreener, Solscan, and on-chain data...</p>
         </div>
-        <p class="loading-text" style="text-align: center; margin-top: 1rem;">Fetching live data...</p>
       </div>
+    </div>
+
+    <!-- Recently Analyzed Section -->
+    <div class="recently-analyzed" id="recentlyAnalyzed">
+      <!-- Populated by JavaScript -->
     </div>
 
     <!-- Error State -->

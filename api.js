@@ -105,6 +105,68 @@ export class DexscreenerAPI {
             throw error;
         }
     }
+
+    /**
+     * Direct token lookup - for very new tokens that aren't indexed by search
+     * Tries multiple endpoints to maximize chances of finding the token
+     * @param {string} address - Token contract address
+     * @returns {Promise<Object>} - Token data with pairs
+     */
+    async getTokenDirect(address) {
+        console.log('[API] Direct token lookup for:', address);
+
+        // Strategy 1: Try the tokens endpoint directly
+        try {
+            const response = await fetch(
+                `${this.baseUrl}/tokens/v1/solana/${address}`
+            );
+            if (response.ok) {
+                const data = await response.json();
+                console.log('[API] Tokens endpoint response:', data);
+                if (data && Array.isArray(data) && data.length > 0) {
+                    return { pairs: data };
+                }
+            }
+        } catch (e) {
+            console.log('[API] Tokens endpoint failed:', e.message);
+        }
+
+        // Strategy 2: Try token-pairs endpoint
+        try {
+            const response = await fetch(
+                `${this.baseUrl}/token-pairs/v1/solana/${address}`
+            );
+            if (response.ok) {
+                const data = await response.json();
+                console.log('[API] Token-pairs endpoint response:', data);
+                if (data && Array.isArray(data) && data.length > 0) {
+                    return { pairs: data };
+                }
+            }
+        } catch (e) {
+            console.log('[API] Token-pairs endpoint failed:', e.message);
+        }
+
+        // Strategy 3: Try the search as last resort
+        try {
+            const response = await fetch(
+                `${this.baseUrl}${CONFIG.API.DEXSCREENER_SEARCH}?q=${address}`
+            );
+            if (response.ok) {
+                const data = await response.json();
+                console.log('[API] Search endpoint response:', data);
+                if (data && data.pairs && data.pairs.length > 0) {
+                    return data;
+                }
+            }
+        } catch (e) {
+            console.log('[API] Search endpoint failed:', e.message);
+        }
+
+        // No data found anywhere
+        console.log('[API] Token not found on any endpoint');
+        return { pairs: [] };
+    }
 }
 
 /**

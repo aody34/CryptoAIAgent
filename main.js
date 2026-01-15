@@ -91,6 +91,9 @@ function init() {
 
     // Setup tab navigation
     setupTabs();
+
+    // Render recently analyzed section
+    renderRecentlyAnalyzed();
 }
 
 /**
@@ -301,6 +304,88 @@ function setupDevCheckButton() {
                 checkDevBtn.innerHTML = '🔍 Check Dev';
             }
         });
+    }
+}
+
+/**
+ * Update loading progress bar
+ * @param {number} percent - Progress percentage
+ * @param {string} message - Status message
+ */
+function updateLoadingProgress(percent, message) {
+    const progressBar = document.getElementById('loadingProgress');
+    const progressText = document.getElementById('loadingText');
+
+    if (progressBar) {
+        progressBar.style.width = `${percent}%`;
+    }
+    if (progressText) {
+        progressText.textContent = message;
+    }
+}
+
+/**
+ * Save token to recently analyzed list
+ * @param {string} query - Token address or ticker
+ */
+function saveRecentlyAnalyzed(query) {
+    try {
+        let recent = JSON.parse(localStorage.getItem('memeradar_recent') || '[]');
+
+        // Remove if already exists (to move to top)
+        recent = recent.filter(r => r !== query);
+
+        // Add to front
+        recent.unshift(query);
+
+        // Keep only last 5
+        recent = recent.slice(0, 5);
+
+        localStorage.setItem('memeradar_recent', JSON.stringify(recent));
+
+        // Update UI
+        renderRecentlyAnalyzed();
+    } catch (e) {
+        console.log('Could not save to localStorage:', e);
+    }
+}
+
+/**
+ * Render recently analyzed section
+ */
+function renderRecentlyAnalyzed() {
+    const container = document.getElementById('recentlyAnalyzed');
+    if (!container) return;
+
+    try {
+        const recent = JSON.parse(localStorage.getItem('memeradar_recent') || '[]');
+
+        if (recent.length === 0) {
+            container.innerHTML = '<p class="no-recent">No recent searches</p>';
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="recent-header">🕐 Recently Analyzed</div>
+            <div class="recent-list">
+                ${recent.map(addr => `
+                    <button class="recent-item" data-address="${addr}" title="${addr}">
+                        ${addr.length > 12 ? addr.slice(0, 6) + '...' + addr.slice(-4) : addr}
+                    </button>
+                `).join('')}
+            </div>
+        `;
+
+        // Add click handlers
+        container.querySelectorAll('.recent-item').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const addr = btn.dataset.address;
+                tokenInput.value = addr;
+                analyzeToken(addr);
+            });
+        });
+    } catch (e) {
+        console.log('Could not render recent:', e);
     }
 }
 
@@ -1187,27 +1272,30 @@ async function analyzeToken(query) {
     showLoading();
 
     try {
-        // Search for the token
+        // Update progress
+        updateLoadingProgress(20, 'Searching Dexscreener...');
+
+        // Try search first
         let result = await api.searchToken(query);
 
         // If no results and query looks like a contract address, try direct lookup
         if ((!result.pairs || result.pairs.length === 0) && query.length >= 32) {
-            console.log('Search failed, trying direct contract lookup on Solana...');
-            try {
-                // Try Solana token pairs endpoint directly
-                const directResult = await api.getTokenPairs('solana', query);
-                if (directResult && Array.isArray(directResult) && directResult.length > 0) {
-                    result = { pairs: directResult };
-                }
-            } catch (directError) {
-                console.log('Direct lookup also failed:', directError.message);
-            }
+            console.log('[ANALYZE] Search returned no results, trying direct lookup...');
+            updateLoadingProgress(40, 'Trying direct token lookup...');
+
+            // Use the new comprehensive direct lookup
+            result = await api.getTokenDirect(query);
         }
 
+        updateLoadingProgress(60, 'Processing token data...');
+
         if (!result.pairs || result.pairs.length === 0) {
-            showError('❌ Token not found. This may be a very new launch not yet indexed. Try again in a few minutes or verify the contract address.');
+            showError('❌ Token not found on Dexscreener. This may be a very new launch (< 5 mins old) or an invalid address. Check the CA on Solscan to verify it exists.');
             return;
         }
+
+        // Save to recently analyzed
+        saveRecentlyAnalyzed(query);
 
         // Filter to supported chains and memecoins
         const filteredPairs = result.pairs.filter(pair => {
