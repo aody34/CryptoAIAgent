@@ -1473,8 +1473,28 @@ tokenInput.addEventListener('focus', () => {
     errorState.classList.remove('active');
 });
 
-// Initialize app
-init();
+// Make selectToken globally available for onclick handlers in HTML
+window.selectToken = (address) => {
+    tokenInput.value = address;
+    analyzeToken(address);
+    // On mobile, close sidebar after selection
+    const sidebar = document.getElementById('freshPairsSidebar');
+    if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
+        sidebar.classList.remove('active');
+    }
+};
+
+// Initialize app with error handling
+try {
+    console.log('🤖 Initializing MemeRadar...');
+    init();
+} catch (error) {
+    console.error('CRITICAL: Init failed', error);
+    if (errorMessage) {
+        errorMessage.textContent = 'App failed to load. Please refresh.';
+        errorMessage.style.display = 'block';
+    }
+}
 
 // CRITICAL: Direct hash check - this GUARANTEES deep linking works
 function checkHashAndLoad() {
