@@ -12,6 +12,9 @@ export const CONFIG = {
     DEXSCREENER_PROFILES: '/token-profiles/latest/v1',
   },
 
+  // Dedicated Solana RPC (Helius) - WARNING: Client-side exposed key
+  RPC_URL: 'https://mainnet.helius-rpc.com/?api-key=9b583a75-fa36-4da9-932d-db8e4e06ae35',
+
   // Blocked large-cap tokens (these should NOT be analyzed)
   BLOCKED_TOKENS: [
     'BTC', 'BITCOIN',

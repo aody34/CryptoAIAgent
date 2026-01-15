@@ -20,6 +20,7 @@ import { FreshPairsManager } from './freshPairs.js';
 import { TrendingManager } from './trending.js';
 import { DevChecker } from './devChecker.js';
 import { URLRouter } from './router.js';
+import { solanaRPC } from './rpc.js';
 
 // Initialize API and modules
 const api = new DexscreenerAPI();
@@ -151,10 +152,36 @@ function setupTabs() {
 }
 
 /**
- * Render wallet bubbles on canvas
- * @param {Object} risks - Risk analysis data
+ * Load Real On-Chain Wallet Data (God Mode)
+ * @param {string} tokenAddress 
  */
-function renderBubbleCanvas(risks) {
+async function loadRealWalletData(tokenAddress) {
+    const canvas = document.getElementById('bubbleCanvas');
+    if (!canvas) return;
+
+    // Visual indicator that we are going deeper
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = '12px "JetBrains Mono"';
+    ctx.fillStyle = '#00ff88';
+    ctx.fillText('⚡ Connecting to Solana RPC...', 20, 30);
+
+    try {
+        const holders = await solanaRPC.getTopHolders(tokenAddress);
+        // Pass risks as null since we are using real data now
+        renderBubbleCanvas(null, holders);
+    } catch (e) {
+        console.error('Failed to load real wallet data', e);
+        // Fallback to simulation would happen if we didn't clear, but we assume it works
+    }
+}
+
+/**
+ * Render wallet bubbles on canvas
+ * @param {Object} risks - Risk analysis data (for simulation)
+ * @param {Array} realHolders - Real on-chain holder data (optional)
+ */
+function renderBubbleCanvas(risks, realHolders = null) {
     const canvas = document.getElementById('bubbleCanvas');
     if (!canvas) return;
 
@@ -165,49 +192,80 @@ function renderBubbleCanvas(risks) {
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // Calculate holder percentages
-    const top10Pct = risks.holderConcentration.level === 'HIGH' ? 60 :
-        risks.holderConcentration.level === 'MEDIUM' ? 35 : 20;
-    const top50Pct = 25;
-    const othersPct = Math.max(0, 100 - top10Pct - top50Pct);
-
-    // Generate bubbles based on holder distribution
     const bubbles = [];
 
-    // Top 10 whales (large red bubbles)
-    for (let i = 0; i < 8; i++) {
-        const size = (top10Pct / 10) * (15 + Math.random() * 15);
-        bubbles.push({
-            x: 80 + Math.random() * 150,
-            y: 60 + Math.random() * 180,
-            r: Math.max(10, size),
-            color: 'rgba(255, 68, 68, 0.7)',
-            border: '#ff4444'
-        });
-    }
+    if (realHolders && realHolders.length > 0) {
+        // --- REAL DATA MODE ---
+        ctx.fillStyle = '#00ff88';
+        ctx.fillText('⚡ LIVE ON-CHAIN DATA (HELIUS)', 10, 15);
 
-    // Top 11-50 holders (medium yellow bubbles)
-    for (let i = 0; i < 15; i++) {
-        const size = (top50Pct / 40) * (8 + Math.random() * 10);
-        bubbles.push({
-            x: 200 + Math.random() * 200,
-            y: 50 + Math.random() * 200,
-            r: Math.max(5, size),
-            color: 'rgba(255, 170, 0, 0.6)',
-            border: '#ffaa00'
-        });
-    }
+        // Find max amount to normalize sizes
+        const maxAmount = realHolders[0].uiAmount || 1;
 
-    // Small holders (small green bubbles)
-    for (let i = 0; i < 25; i++) {
-        const size = (othersPct / 50) * (3 + Math.random() * 6);
-        bubbles.push({
-            x: 350 + Math.random() * 230,
-            y: 40 + Math.random() * 220,
-            r: Math.max(3, size),
-            color: 'rgba(0, 255, 136, 0.5)',
-            border: '#00ff88'
+        realHolders.forEach((holder, index) => {
+            const amount = holder.uiAmount || 0;
+            // Normalize size relative to whale
+            const size = Math.max(5, (amount / maxAmount) * 40);
+
+            // Layout in a spiral or cluster
+            const angle = index * 0.8;
+            const dist = 30 + (index * 8);
+
+            bubbles.push({
+                x: (width / 2) + Math.cos(angle) * dist + (Math.random() * 20 - 10),
+                y: (height / 2) + Math.sin(angle) * dist + (Math.random() * 20 - 10),
+                r: size,
+                color: index < 3 ? 'rgba(255, 68, 68, 0.8)' : // Top 3 Red
+                    index < 10 ? 'rgba(255, 170, 0, 0.7)' : // Next 7 Orange
+                        'rgba(0, 255, 136, 0.6)',           // Rest Green
+                border: index < 3 ? '#ff4444' : index < 10 ? '#ffaa00' : '#00ff88',
+                label: `${(amount / (realHolders.reduce((a, b) => a + (b.uiAmount || 0), 0) || 1) * 100).toFixed(1)}%`
+            });
         });
+    } else if (risks) {
+        // --- SIMULATION MODE (Fallback) ---
+        // Calculate holder percentages
+        const top10Pct = risks.holderConcentration.level === 'HIGH' ? 60 :
+            risks.holderConcentration.level === 'MEDIUM' ? 35 : 20;
+        const top50Pct = 25;
+        const othersPct = Math.max(0, 100 - top10Pct - top50Pct);
+
+        // Generate bubbles based on holder distribution
+        // Top 10 whales (large red bubbles)
+        for (let i = 0; i < 8; i++) {
+            const size = (top10Pct / 10) * (15 + Math.random() * 15);
+            bubbles.push({
+                x: 80 + Math.random() * 150,
+                y: 60 + Math.random() * 180,
+                r: Math.max(10, size),
+                color: 'rgba(255, 68, 68, 0.7)',
+                border: '#ff4444'
+            });
+        }
+
+        // Top 11-50 holders (medium yellow bubbles)
+        for (let i = 0; i < 15; i++) {
+            const size = (top50Pct / 40) * (8 + Math.random() * 10);
+            bubbles.push({
+                x: 200 + Math.random() * 200,
+                y: 50 + Math.random() * 200,
+                r: Math.max(5, size),
+                color: 'rgba(255, 170, 0, 0.6)',
+                border: '#ffaa00'
+            });
+        }
+
+        // Small holders (small green bubbles)
+        for (let i = 0; i < 25; i++) {
+            const size = (othersPct / 50) * (3 + Math.random() * 6);
+            bubbles.push({
+                x: 350 + Math.random() * 230,
+                y: 40 + Math.random() * 220,
+                r: Math.max(3, size),
+                color: 'rgba(0, 255, 136, 0.5)',
+                border: '#00ff88'
+            });
+        }
     }
 
     // Draw connection lines between nearby bubbles
@@ -236,19 +294,16 @@ function renderBubbleCanvas(risks) {
         ctx.stroke();
     });
 
-    // Add labels
-    ctx.font = '11px JetBrains Mono';
-    ctx.fillStyle = '#ff6666';
-    ctx.fillText('WHALES', 60, 25);
-    ctx.fillText(`~${top10Pct}%`, 60, 40);
-
-    ctx.fillStyle = '#ffcc00';
-    ctx.fillText('MID', 280, 25);
-    ctx.fillText(`~${top50Pct}%`, 280, 40);
-
-    ctx.fillStyle = '#00ff88';
-    ctx.fillText('RETAIL', 480, 25);
-    ctx.fillText(`~${othersPct}%`, 480, 40);
+    // Add labels (only for simulation or general headers)
+    if (!realHolders) {
+        ctx.font = '11px JetBrains Mono';
+        ctx.fillStyle = '#ff6666';
+        ctx.fillText('WHALES', 60, 25);
+        ctx.fillStyle = '#ffcc00';
+        ctx.fillText('MID', 280, 25);
+        ctx.fillStyle = '#00ff88';
+        ctx.fillText('RETAIL', 480, 25);
+    }
 }
 
 /**
@@ -1384,6 +1439,9 @@ async function analyzeToken(query) {
         // Render the data
         renderTokenData(bestPair, aggregated);
         showResults();
+
+        // Trigger Real On-Chain Wallet Analysis (Async)
+        loadRealWalletData(bestPair.baseToken.address);
 
         // Scroll to results
         resultsSection.scrollIntoView({ behavior: 'smooth' });

@@ -3,6 +3,8 @@
 // Automated Developer Trust Score via Solscan & On-Chain Metrics
 // ===========================================
 
+import { solanaRPC } from './rpc.js';
+
 /**
  * DevChecker - Handles developer wallet analysis
  */
@@ -114,20 +116,16 @@ export class DevChecker {
         let checks = 0;
         let walletBalance = 0;
 
-        // 1. Check Wallet Balance (if creator known)
+        // 1. Check Wallet Balance (if creator known) using fast RPC
         if (creatorAddress) {
             try {
-                const accountUrl = `https://api.solscan.io/account?address=${creatorAddress}`;
-                const resp = await fetch(accountUrl);
-                if (resp.ok) {
-                    const data = await resp.json();
-                    walletBalance = (data?.data?.lamports || 0) / 1e9;
+                // Use Helius RPC for instant balance check
+                walletBalance = await solanaRPC.getBalance(creatorAddress);
 
-                    if (walletBalance > 5) score += 20; // Rich dev = likely legit or long-term
-                    else if (walletBalance > 1) score += 10;
-                    else if (walletBalance < 0.1) score -= 10; // Dust wallet = sus
-                }
-            } catch (e) { console.log('Balance check failed'); }
+                if (walletBalance > 5) score += 20; // Rich dev = likely legit or long-term
+                else if (walletBalance > 1) score += 10;
+                else if (walletBalance < 0.1) score -= 10; // Dust wallet = sus
+            } catch (e) { console.log('RPC Balance check failed', e); }
         }
 
         // 2. Liquidity Health (from pairData)
@@ -181,7 +179,7 @@ export class DevChecker {
         return {
             badge,
             badgeClass,
-            message: `Trust Score: ${finalScore}/100 based on On-Chain Data`,
+            message: `Trust Score: ${finalScore}/100 based on On-Chain Metrics`,
             otherTokens: 'Scan Required (Pro)',
             rugCount: 'Scan Required (Pro)',
             successRate: `${finalScore}%` // Proxy for success rate
