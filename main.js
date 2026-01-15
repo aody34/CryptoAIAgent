@@ -568,6 +568,32 @@ function updateEvidenceBadges(pair, risks) {
 }
 
 /**
+ * Update status badge at top of token card
+ * @param {string} strength - Verdict strength
+ * @param {Object} risks - Risk analysis
+ */
+function updateStatusBadge(strength, risks) {
+    const badge = document.getElementById('statusBadge');
+    if (!badge) return;
+
+    badge.classList.remove('bullish', 'neutral', 'danger');
+
+    // Determine status based on multiple factors
+    const riskScore = risks.overall.score;
+
+    if (strength === 'Strong' && riskScore <= 4) {
+        badge.textContent = '🟢 BULLISH';
+        badge.classList.add('bullish');
+    } else if (strength === 'Weak' || riskScore >= 7) {
+        badge.textContent = '🔴 DANGER';
+        badge.classList.add('danger');
+    } else {
+        badge.textContent = '🟡 CAUTION';
+        badge.classList.add('neutral');
+    }
+}
+
+/**
  * Render token data to UI
  * @param {Object} pair - Best trading pair data
  * @param {Object} aggregated - Aggregated data from all pairs
@@ -750,6 +776,9 @@ function renderTokenData(pair, aggregated) {
     tagsContainer.innerHTML = verdict.suitableFor
         .map(tag => `<span class="verdict-tag">${tag}</span>`)
         .join('');
+
+    // Update status badge at top
+    updateStatusBadge(verdict.strength, risks);
 
     // ========== ADVANCED FEATURES ==========
 
@@ -1245,6 +1274,41 @@ tokenInput.addEventListener('focus', () => {
 // Initialize app
 init();
 
+// CRITICAL: Direct hash check - this GUARANTEES deep linking works
+function checkHashAndLoad() {
+    const hash = window.location.hash;
+    console.log('[HASH CHECK] Current hash:', hash);
+
+    if (hash && hash.length > 1) {
+        const tokenAddress = hash.substring(1).replace('token=', '');
+        console.log('[HASH CHECK] Token address extracted:', tokenAddress);
+
+        // Only auto-load if it looks like a valid contract address (32+ chars)
+        if (tokenAddress.length >= 32) {
+            console.log('[HASH CHECK] Valid address, triggering analyze...');
+            tokenInput.value = tokenAddress;
+            analyzeToken(tokenAddress);
+        }
+    }
+}
+
+// Run hash check on multiple events to ensure it works
+window.addEventListener('load', () => {
+    console.log('[HASH CHECK] Window load event');
+    setTimeout(checkHashAndLoad, 500);
+});
+
+// Also check hash immediately after a short delay
+setTimeout(checkHashAndLoad, 800);
+
+// Handle hash changes (when someone changes the URL)
+window.addEventListener('hashchange', () => {
+    console.log('[HASH CHECK] Hash changed!');
+    checkHashAndLoad();
+});
+
 // Add some example tokens for easy testing
 console.log('%c🤖 MemeRadar Loaded', 'color: #00ff88; font-size: 16px; font-weight: bold;');
 console.log('%cTry searching for: WIF, BONK, POPCAT, or any Solana memecoin ticker', 'color: #a0a0b0;');
+console.log('%cDeep linking enabled - share URLs with #ContractAddress', 'color: #a0a0b0;');
+

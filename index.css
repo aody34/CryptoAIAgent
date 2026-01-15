@@ -948,6 +948,69 @@ h4 {
   background: rgba(0, 255, 136, 0.1);
 }
 
+/* ===== STATUS BADGE ===== */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: var(--spacing-sm);
+  vertical-align: middle;
+}
+
+.status-badge.bullish {
+  background: rgba(0, 255, 136, 0.2);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.status-badge.neutral {
+  background: rgba(255, 170, 0, 0.2);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+}
+
+.status-badge.danger {
+  background: rgba(255, 68, 68, 0.2);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+/* ===== STICKY SEARCH (Mobile) ===== */
+@media (max-width: 768px) {
+  .hero {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg-primary);
+    padding-top: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .hero-title,
+  .hero-subtitle {
+    display: none;
+  }
+
+  .search-container {
+    margin-top: 0;
+  }
+
+  .keyboard-hints {
+    display: none;
+  }
+}
+
+/* ===== HIDE EMPTY SECTIONS ===== */
+.section-empty {
+  display: none !important;
+}
+
 .address-row {
   display: flex;
   align-items: center;
