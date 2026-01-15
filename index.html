@@ -137,578 +137,598 @@
     <!-- Results Section -->
     <section class="results-section" id="resultsSection">
       <div class="container">
-        <div class="section-grid">
+        <!-- Tab Navigation -->
+        <div class="results-tabs" id="resultsTabs">
+          <button class="tab-btn active" data-tab="overview">📊 Overview</button>
+          <button class="tab-btn" data-tab="security">🛡️ Security</button>
+          <button class="tab-btn" data-tab="momentum">📈 Momentum</button>
+          <button class="tab-btn" data-tab="wallets">🗺️ Wallets</button>
+        </div>
 
-          <!-- 1. Token Identification -->
-          <div class="card" id="tokenCard">
-            <div class="token-header">
-              <img src="" alt="Token Logo" class="token-image" id="tokenImage">
-              <div class="token-info">
-                <h2>
-                  <span id="tokenName">Token Name</span>
-                  <span class="token-ticker" id="tokenTicker">($TICKER)</span>
-                </h2>
-                <div class="address-row">
-                  <p class="token-address" id="tokenAddress">Contract Address</p>
-                  <button class="copy-btn" id="copyAddressBtn" title="Copy contract address">📋</button>
-                </div>
-                <div class="chain-badge" id="chainBadge">
-                  <span>⛓️</span>
-                  <span id="chainName">Solana</span>
-                </div>
-              </div>
-            </div>
-            <div class="data-grid">
-              <a href="#" target="_blank" class="data-item" id="dexscreenerLink" style="text-decoration: none;">
-                <div class="data-label">View on</div>
-                <div class="data-value" style="color: var(--accent-primary);">Dexscreener ↗</div>
-              </a>
-              <a href="#" target="_blank" class="data-item" id="axiomLink" style="text-decoration: none;">
-                <div class="data-label">View on</div>
-                <div class="data-value" style="color: var(--accent-primary);">Axiom ↗</div>
-              </a>
-              <button class="share-btn" id="shareBtn" title="Copy shareable link">
-                <span>📋</span>
-                <span>Share</span>
-              </button>
-            </div>
-          </div>
+        <!-- Tab Content: Overview (visible by default) -->
+        <div class="tab-content active" id="tab-overview">
+          <div class="section-grid">
 
-          <!-- 2. Live Market Data -->
-          <div class="card">
-            <div class="card-header">
-              <div class="card-icon">📊</div>
-              <h3 class="card-title">Live Market Data</h3>
-            </div>
-            <div class="data-grid">
-              <div class="data-item">
-                <div class="data-label">Current Price</div>
-                <div class="data-value" id="currentPrice">$0.00</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Market Cap</div>
-                <div class="data-value" id="marketCap">$0</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Liquidity (USD)</div>
-                <div class="data-value" id="liquidity">$0</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">24H Volume</div>
-                <div class="data-value" id="volume24h">$0</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">24H Change</div>
-                <div class="data-value" id="priceChange24h">0%</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Circulating Supply</div>
-                <div class="data-value" id="totalSupply">Data Pending ⏳</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 3. On-Chain & Trading Metrics -->
-          <div class="card">
-            <div class="card-header">
-              <div class="card-icon">🔗</div>
-              <h3 class="card-title">On-Chain & Trading Metrics</h3>
-            </div>
-            <div class="data-grid">
-              <div class="data-item">
-                <div class="data-label">24H Transactions</div>
-                <div class="data-value" id="txCount24h">0</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">24H Buys</div>
-                <div class="data-value positive" id="buys24h">0</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">24H Sells</div>
-                <div class="data-value negative" id="sells24h">0</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Buy/Sell Ratio</div>
-                <div class="data-value" id="buySellRatio">1.00</div>
-              </div>
-              <div class="data-item"
-                style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: var(--radius-sm);">
-                <div class="data-label">🔒 Liquidity Lock Status</div>
-                <div class="data-value" id="liquidityLock" style="font-size: 1.1rem; font-weight: 700;">Data Pending ⏳
-                </div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Risk Flags</div>
-                <div class="data-value" id="riskFlags">See Risk Analysis</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 4. Market Sentiment & Momentum -->
-          <div class="card">
-            <div class="card-header">
-              <div class="card-icon">📈</div>
-              <h3 class="card-title">Market Sentiment & Momentum</h3>
-            </div>
-            <div class="data-grid">
-              <div class="data-item">
-                <div class="data-label">Volume Trend</div>
-                <div class="data-value" id="volumeTrend">Stable</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Whale Activity</div>
-                <div class="data-value" id="whaleActivity">Neutral</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Community Hype</div>
-                <div class="data-value" id="communityHype">Medium</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Price Volatility</div>
-                <div class="data-value" id="volatility">Medium</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Trend Direction</div>
-                <div class="data-value" id="trendDirection">Neutral</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Pair Count</div>
-                <div class="data-value" id="pairCount">1</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 5. 24-Hour Momentum Score -->
-          <div class="card" style="grid-column: 1 / -1;">
-            <div class="card-header">
-              <div class="card-icon">⚡</div>
-              <h3 class="card-title">24-Hour Momentum Score</h3>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: center;">
-              <!-- Big Score Display -->
-              <div style="text-align: center;">
-                <div id="momentumScore"
-                  style="font-size: 5rem; font-weight: 800; line-height: 1; color: var(--accent-primary);">
-                  75
-                </div>
-                <div style="font-size: 1.2rem; color: var(--text-muted);">/ 100</div>
-                <div id="momentumLabel"
-                  style="margin-top: 0.5rem; font-size: 1.1rem; font-weight: 600; color: var(--accent-primary);">
-                  HIGH MOMENTUM
-                </div>
-              </div>
-
-              <!-- Momentum Breakdown -->
-              <div>
-                <div class="data-grid" style="grid-template-columns: repeat(2, 1fr);">
-                  <div class="data-item">
-                    <div class="data-label">Volume Surge</div>
-                    <div class="data-value" id="volumeSurge">+0%</div>
+            <!-- 1. Token Identification -->
+            <div class="card" id="tokenCard">
+              <div class="token-header">
+                <img src="" alt="Token Logo" class="token-image" id="tokenImage">
+                <div class="token-info">
+                  <h2>
+                    <span id="tokenName">Token Name</span>
+                    <span class="token-ticker" id="tokenTicker">($TICKER)</span>
+                  </h2>
+                  <div class="address-row">
+                    <p class="token-address" id="tokenAddress">Contract Address</p>
+                    <button class="copy-btn" id="copyAddressBtn" title="Copy contract address">📋</button>
                   </div>
-                  <div class="data-item">
-                    <div class="data-label">Buy Pressure</div>
-                    <div class="data-value" id="buyPressure">Neutral</div>
+                  <div class="chain-badge" id="chainBadge">
+                    <span>⛓️</span>
+                    <span id="chainName">Solana</span>
                   </div>
-                  <div class="data-item">
-                    <div class="data-label">Whale Activity</div>
-                    <div class="data-value" id="momentumWhales">Neutral</div>
+                </div>
+              </div>
+              <div class="data-grid">
+                <a href="#" target="_blank" class="data-item" id="dexscreenerLink" style="text-decoration: none;">
+                  <div class="data-label">View on</div>
+                  <div class="data-value" style="color: var(--accent-primary);">Dexscreener ↗</div>
+                </a>
+                <a href="#" target="_blank" class="data-item" id="axiomLink" style="text-decoration: none;">
+                  <div class="data-label">View on</div>
+                  <div class="data-value" style="color: var(--accent-primary);">Axiom ↗</div>
+                </a>
+                <button class="share-btn" id="shareBtn" title="Copy shareable link">
+                  <span>📋</span>
+                  <span>Share</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. Live Market Data -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-icon">📊</div>
+                <h3 class="card-title">Live Market Data</h3>
+              </div>
+              <div class="data-grid">
+                <div class="data-item">
+                  <div class="data-label">Current Price</div>
+                  <div class="data-value" id="currentPrice">$0.00</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Market Cap</div>
+                  <div class="data-value" id="marketCap">$0</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Liquidity (USD)</div>
+                  <div class="data-value" id="liquidity">$0</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">24H Volume</div>
+                  <div class="data-value" id="volume24h">$0</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">24H Change</div>
+                  <div class="data-value" id="priceChange24h">0%</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Circulating Supply</div>
+                  <div class="data-value" id="totalSupply">Data Pending ⏳</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. On-Chain & Trading Metrics -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-icon">🔗</div>
+                <h3 class="card-title">On-Chain & Trading Metrics</h3>
+              </div>
+              <div class="data-grid">
+                <div class="data-item">
+                  <div class="data-label">24H Transactions</div>
+                  <div class="data-value" id="txCount24h">0</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">24H Buys</div>
+                  <div class="data-value positive" id="buys24h">0</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">24H Sells</div>
+                  <div class="data-value negative" id="sells24h">0</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Buy/Sell Ratio</div>
+                  <div class="data-value" id="buySellRatio">1.00</div>
+                </div>
+                <div class="data-item"
+                  style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: var(--radius-sm);">
+                  <div class="data-label">🔒 Liquidity Lock Status</div>
+                  <div class="data-value" id="liquidityLock" style="font-size: 1.1rem; font-weight: 700;">Data Pending ⏳
                   </div>
-                  <div class="data-item">
-                    <div class="data-label">Momentum Strength</div>
-                    <div class="data-value" id="momentumStrength">Moderate</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Risk Flags</div>
+                  <div class="data-value" id="riskFlags">See Risk Analysis</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Market Sentiment & Momentum -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-icon">📈</div>
+                <h3 class="card-title">Market Sentiment & Momentum</h3>
+              </div>
+              <div class="data-grid">
+                <div class="data-item">
+                  <div class="data-label">Volume Trend</div>
+                  <div class="data-value" id="volumeTrend">Stable</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Whale Activity</div>
+                  <div class="data-value" id="whaleActivity">Neutral</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Community Hype</div>
+                  <div class="data-value" id="communityHype">Medium</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Price Volatility</div>
+                  <div class="data-value" id="volatility">Medium</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Trend Direction</div>
+                  <div class="data-value" id="trendDirection">Neutral</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Pair Count</div>
+                  <div class="data-value" id="pairCount">1</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. 24-Hour Momentum Score -->
+            <div class="card" style="grid-column: 1 / -1;">
+              <div class="card-header">
+                <div class="card-icon">⚡</div>
+                <h3 class="card-title">24-Hour Momentum Score</h3>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: center;">
+                <!-- Big Score Display -->
+                <div style="text-align: center;">
+                  <div id="momentumScore"
+                    style="font-size: 5rem; font-weight: 800; line-height: 1; color: var(--accent-primary);">
+                    75
+                  </div>
+                  <div style="font-size: 1.2rem; color: var(--text-muted);">/ 100</div>
+                  <div id="momentumLabel"
+                    style="margin-top: 0.5rem; font-size: 1.1rem; font-weight: 600; color: var(--accent-primary);">
+                    HIGH MOMENTUM
                   </div>
                 </div>
 
-                <!-- Momentum Bar -->
-                <div style="margin-top: 1rem;">
-                  <div
-                    style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">
-                    <span>🐻 Weak</span>
-                    <span>➡️ Moderate</span>
-                    <span>🚀 Strong</span>
+                <!-- Momentum Breakdown -->
+                <div>
+                  <div class="data-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="data-item">
+                      <div class="data-label">Volume Surge</div>
+                      <div class="data-value" id="volumeSurge">+0%</div>
+                    </div>
+                    <div class="data-item">
+                      <div class="data-label">Buy Pressure</div>
+                      <div class="data-value" id="buyPressure">Neutral</div>
+                    </div>
+                    <div class="data-item">
+                      <div class="data-label">Whale Activity</div>
+                      <div class="data-value" id="momentumWhales">Neutral</div>
+                    </div>
+                    <div class="data-item">
+                      <div class="data-label">Momentum Strength</div>
+                      <div class="data-value" id="momentumStrength">Moderate</div>
+                    </div>
                   </div>
-                  <div
-                    style="height: 12px; background: linear-gradient(90deg, #ff4444, #ffaa00 50%, #00ff88); border-radius: 6px; position: relative;">
-                    <div id="momentumIndicator"
-                      style="position: absolute; top: -4px; left: 75%; transform: translateX(-50%); width: 20px; height: 20px; background: #fff; border-radius: 50%; border: 3px solid var(--accent-primary); box-shadow: 0 0 10px var(--accent-glow);">
+
+                  <!-- Momentum Bar -->
+                  <div style="margin-top: 1rem;">
+                    <div
+                      style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+                      <span>🐻 Weak</span>
+                      <span>➡️ Moderate</span>
+                      <span>🚀 Strong</span>
+                    </div>
+                    <div
+                      style="height: 12px; background: linear-gradient(90deg, #ff4444, #ffaa00 50%, #00ff88); border-radius: 6px; position: relative;">
+                      <div id="momentumIndicator"
+                        style="position: absolute; top: -4px; left: 75%; transform: translateX(-50%); width: 20px; height: 20px; background: #fff; border-radius: 50%; border: 3px solid var(--accent-primary); box-shadow: 0 0 10px var(--accent-glow);">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
+                ⚠️ Momentum score based on volume spikes, buy/sell ratio, and whale activity. Data-driven analysis only.
+              </p>
+            </div>
+
+            <!-- TRUST vs HYPE Section -->
+            <div class="card" style="grid-column: 1 / -1;">
+              <div class="card-header">
+                <div class="card-icon">⚔️</div>
+                <h3 class="card-title">Trust vs Hype Analysis</h3>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <!-- LEFT: The Truth -->
+                <div
+                  style="background: rgba(0, 255, 136, 0.05); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: var(--radius-md); padding: 1.5rem;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    <span style="font-size: 1.5rem;">🛡️</span>
+                    <h4 style="color: var(--accent-primary); font-size: 1.1rem; margin: 0;">THE TRUTH</h4>
+                  </div>
+
+                  <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div class="data-item">
+                      <div class="data-label">Dev Success History</div>
+                      <div class="data-value" id="trustDevSuccess">Data Pending ⏳</div>
+                    </div>
+                    <div class="data-item">
+                      <div class="data-label">Contract Renounced</div>
+                      <div class="data-value" id="trustRenounced">N/A (Solana)</div>
+                    </div>
+                    <div class="data-item">
+                      <div class="data-label">Top 10 Holder %</div>
+                      <div class="data-value" id="trustTop10">--%</div>
+                    </div>
+                    <div class="data-item">
+                      <div class="data-label">Token Age</div>
+                      <div class="data-value" id="trustAge">Data Pending ⏳</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- RIGHT: The Hype -->
+                <div
+                  style="background: rgba(255, 170, 0, 0.05); border: 1px solid rgba(255, 170, 0, 0.2); border-radius: var(--radius-md); padding: 1.5rem;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    <span style="font-size: 1.5rem;">🔥</span>
+                    <h4 style="color: var(--warning); font-size: 1.1rem; margin: 0;">THE HYPE</h4>
+                  </div>
+
+                  <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div class="data-item">
+                      <div class="data-label">Social Mentions</div>
+                      <div class="data-value" id="hypeSocial">Data Pending ⏳</div>
+                    </div>
+                    <div class="data-item">
+                      <div class="data-label">Volume Trend</div>
+                      <div class="data-value" id="hypeVolume">Neutral</div>
+                    </div>
+                    <div class="data-item">
+                      <div class="data-label">AI Sentiment</div>
+                      <div class="data-value" id="hypeSentiment">Neutral</div>
+                    </div>
+                    <div class="data-item">
+                      <div class="data-label">Hype Score</div>
+                      <div class="data-value" id="hypeScoreSmall">--/100</div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <p style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
-              ⚠️ Momentum score based on volume spikes, buy/sell ratio, and whale activity. Data-driven analysis only.
-            </p>
-          </div>
+            <!-- 6. Risk Analysis -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-icon">🛡️</div>
+                <h3 class="card-title">Risk Analysis</h3>
+              </div>
 
-          <!-- TRUST vs HYPE Section -->
-          <div class="card" style="grid-column: 1 / -1;">
-            <div class="card-header">
-              <div class="card-icon">⚔️</div>
-              <h3 class="card-title">Trust vs Hype Analysis</h3>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-              <!-- LEFT: The Truth -->
-              <div
-                style="background: rgba(0, 255, 136, 0.05); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: var(--radius-md); padding: 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-                  <span style="font-size: 1.5rem;">🛡️</span>
-                  <h4 style="color: var(--accent-primary); font-size: 1.1rem; margin: 0;">THE TRUTH</h4>
-                </div>
-
-                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                  <div class="data-item">
-                    <div class="data-label">Dev Success History</div>
-                    <div class="data-value" id="trustDevSuccess">Data Pending ⏳</div>
-                  </div>
-                  <div class="data-item">
-                    <div class="data-label">Contract Renounced</div>
-                    <div class="data-value" id="trustRenounced">N/A (Solana)</div>
-                  </div>
-                  <div class="data-item">
-                    <div class="data-label">Top 10 Holder %</div>
-                    <div class="data-value" id="trustTop10">--%</div>
-                  </div>
-                  <div class="data-item">
-                    <div class="data-label">Token Age</div>
-                    <div class="data-value" id="trustAge">Data Pending ⏳</div>
-                  </div>
+              <!-- Risk Gauge Speedometer -->
+              <div class="risk-gauge" id="riskGauge">
+                <div class="risk-gauge-bg"></div>
+                <div class="risk-gauge-needle" id="riskNeedle"></div>
+                <div class="risk-gauge-value" id="overallRiskScore">5/10</div>
+                <div class="risk-gauge-labels">
+                  <span>SAFE</span>
+                  <span>CAUTION</span>
+                  <span>DANGER</span>
                 </div>
               </div>
 
-              <!-- RIGHT: The Hype -->
-              <div
-                style="background: rgba(255, 170, 0, 0.05); border: 1px solid rgba(255, 170, 0, 0.2); border-radius: var(--radius-md); padding: 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-                  <span style="font-size: 1.5rem;">🔥</span>
-                  <h4 style="color: var(--warning); font-size: 1.1rem; margin: 0;">THE HYPE</h4>
+              <div style="margin-top: 1.5rem;">
+                <div class="data-item" style="margin-bottom: 1rem;">
+                  <div class="data-label">Rug Pull Risk</div>
+                  <div class="data-value" id="rugPullRisk">Medium</div>
+                  <div class="risk-meter">
+                    <div class="risk-meter-fill medium" id="rugPullMeter"></div>
+                  </div>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                  <div class="data-item">
-                    <div class="data-label">Social Mentions</div>
-                    <div class="data-value" id="hypeSocial">Data Pending ⏳</div>
+                <div class="data-item" style="margin-bottom: 1rem;">
+                  <div class="data-label">Liquidity Risk</div>
+                  <div class="data-value" id="liquidityRisk">Medium</div>
+                  <div class="risk-meter">
+                    <div class="risk-meter-fill medium" id="liquidityMeter"></div>
                   </div>
-                  <div class="data-item">
-                    <div class="data-label">Volume Trend</div>
-                    <div class="data-value" id="hypeVolume">Neutral</div>
+                </div>
+
+                <div class="data-item" style="margin-bottom: 1rem;">
+                  <div class="data-label">Holder Concentration Risk</div>
+                  <div class="data-value" id="holderRisk">Medium</div>
+                  <div class="risk-meter">
+                    <div class="risk-meter-fill medium" id="holderMeter"></div>
                   </div>
-                  <div class="data-item">
-                    <div class="data-label">AI Sentiment</div>
-                    <div class="data-value" id="hypeSentiment">Neutral</div>
-                  </div>
-                  <div class="data-item">
-                    <div class="data-label">Hype Score</div>
-                    <div class="data-value" id="hypeScoreSmall">--/100</div>
+                </div>
+
+                <div class="data-item">
+                  <div class="data-label">Volatility Risk</div>
+                  <div class="data-value" id="volatilityRisk">Medium</div>
+                  <div class="risk-meter">
+                    <div class="risk-meter-fill medium" id="volatilityMeter"></div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- 6. Risk Analysis -->
-          <div class="card">
-            <div class="card-header">
-              <div class="card-icon">🛡️</div>
-              <h3 class="card-title">Risk Analysis</h3>
-            </div>
-
-            <!-- Risk Gauge Speedometer -->
-            <div class="risk-gauge" id="riskGauge">
-              <div class="risk-gauge-bg"></div>
-              <div class="risk-gauge-needle" id="riskNeedle"></div>
-              <div class="risk-gauge-value" id="overallRiskScore">5/10</div>
-              <div class="risk-gauge-labels">
-                <span>SAFE</span>
-                <span>CAUTION</span>
-                <span>DANGER</span>
+            <!-- 7. Final AI Verdict -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-icon">🧠</div>
+                <h3 class="card-title">Final AI Verdict</h3>
               </div>
-            </div>
 
-            <div style="margin-top: 1.5rem;">
-              <div class="data-item" style="margin-bottom: 1rem;">
-                <div class="data-label">Rug Pull Risk</div>
-                <div class="data-value" id="rugPullRisk">Medium</div>
-                <div class="risk-meter">
-                  <div class="risk-meter-fill medium" id="rugPullMeter"></div>
+              <div class="verdict-box">
+                <div class="verdict-header">
+                  <div class="verdict-icon" id="verdictIcon">⚖️</div>
+                  <div>
+                    <h4 style="margin-bottom: 0.25rem;">Project Strength</h4>
+                    <div class="data-value" id="projectStrength" style="font-size: 1.25rem;">Moderate</div>
+                  </div>
                 </div>
-              </div>
 
-              <div class="data-item" style="margin-bottom: 1rem;">
-                <div class="data-label">Liquidity Risk</div>
-                <div class="data-value" id="liquidityRisk">Medium</div>
-                <div class="risk-meter">
-                  <div class="risk-meter-fill medium" id="liquidityMeter"></div>
+                <!-- Evidence-Based Badges -->
+                <div class="evidence-badges" id="evidenceBadges">
+                  <span class="evidence-badge" id="evidenceLp">LP: --</span>
+                  <span class="evidence-badge" id="evidenceHolders">Top10: --%</span>
+                  <span class="evidence-badge" id="evidenceDev">Dev: --</span>
+                  <span class="evidence-badge" id="evidenceAge">Age: --</span>
                 </div>
-              </div>
 
-              <div class="data-item" style="margin-bottom: 1rem;">
-                <div class="data-label">Holder Concentration Risk</div>
-                <div class="data-value" id="holderRisk">Medium</div>
-                <div class="risk-meter">
-                  <div class="risk-meter-fill medium" id="holderMeter"></div>
-                </div>
-              </div>
+                <p class="verdict-text" id="verdictSummary">
+                  Analyzing token metrics...
+                </p>
 
-              <div class="data-item">
-                <div class="data-label">Volatility Risk</div>
-                <div class="data-value" id="volatilityRisk">Medium</div>
-                <div class="risk-meter">
-                  <div class="risk-meter-fill medium" id="volatilityMeter"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 7. Final AI Verdict -->
-          <div class="card">
-            <div class="card-header">
-              <div class="card-icon">🧠</div>
-              <h3 class="card-title">Final AI Verdict</h3>
-            </div>
-
-            <div class="verdict-box">
-              <div class="verdict-header">
-                <div class="verdict-icon" id="verdictIcon">⚖️</div>
-                <div>
-                  <h4 style="margin-bottom: 0.25rem;">Project Strength</h4>
-                  <div class="data-value" id="projectStrength" style="font-size: 1.25rem;">Moderate</div>
-                </div>
-              </div>
-
-              <!-- Evidence-Based Badges -->
-              <div class="evidence-badges" id="evidenceBadges">
-                <span class="evidence-badge" id="evidenceLp">LP: --</span>
-                <span class="evidence-badge" id="evidenceHolders">Top10: --%</span>
-                <span class="evidence-badge" id="evidenceDev">Dev: --</span>
-                <span class="evidence-badge" id="evidenceAge">Age: --</span>
-              </div>
-
-              <p class="verdict-text" id="verdictSummary">
-                Analyzing token metrics...
-              </p>
-
-              <div style="margin-top: 1rem;">
-                <div class="data-label">Best Suited For:</div>
-                <div class="verdict-tags" id="suitableTags">
-                  <span class="verdict-tag">Short-term traders</span>
-                  <span class="verdict-tag">High-risk memecoin investors</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- ========== ADVANCED FEATURES ========== -->
-
-          <!-- 8. Wallet Cluster Analysis (Bubble Maps) -->
-          <div class="card" style="grid-column: 1 / -1;">
-            <div class="card-header">
-              <div class="card-icon">🗺️</div>
-              <h3 class="card-title">Wallet Cluster Analysis</h3>
-            </div>
-
-            <div class="data-grid" style="grid-template-columns: repeat(3, 1fr);">
-              <div class="data-item">
-                <div class="data-label">Top 10 Holders</div>
-                <div class="data-value warning" id="top10Holders">N/A</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Whale Concentration</div>
-                <div class="data-value" id="whaleConcentration">Data Pending ⏳</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Cluster Risk</div>
-                <div class="data-value" id="clusterRisk">Data Pending ⏳</div>
-              </div>
-            </div>
-
-            <!-- Holder Distribution Bar -->
-            <div style="margin-top: 1.5rem;">
-              <div class="data-label" style="margin-bottom: 0.5rem;">Holder Distribution</div>
-              <div class="holder-bar"
-                style="display: flex; height: 24px; border-radius: 6px; overflow: hidden; background: var(--bg-glass);">
-                <div id="holderBar1" style="background: linear-gradient(90deg, #ff4444, #ff6666); width: 30%;"
-                  title="Top 1-10 Holders"></div>
-                <div id="holderBar2" style="background: linear-gradient(90deg, #ffaa00, #ffcc00); width: 20%;"
-                  title="Top 11-50 Holders"></div>
-                <div id="holderBar3" style="background: linear-gradient(90deg, #00ff88, #00cc66); width: 50%;"
-                  title="Other Holders"></div>
-              </div>
-              <div
-                style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">
-                <span>🔴 Top 10: <span id="top10Pct">30%</span></span>
-                <span>🟡 Top 11-50: <span id="top50Pct">20%</span></span>
-                <span>🟢 Others: <span id="othersPct">50%</span></span>
-              </div>
-            </div>
-
-            <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-              <a href="#" target="_blank" id="bubblemapsLink" class="action-btn">
-                🗺️ View Bubble Map
-              </a>
-              <a href="#" target="_blank" id="holdersLink" class="action-btn secondary">
-                👥 View All Holders
-              </a>
-            </div>
-          </div>
-
-          <!-- 9. Social Pulse -->
-          <div class="card">
-            <div class="card-header">
-              <div class="card-icon">📱</div>
-              <h3 class="card-title">Social Pulse</h3>
-            </div>
-
-            <!-- Hype Score Meter -->
-            <div style="text-align: center; margin-bottom: 1.5rem;">
-              <div class="data-label">Hype Score</div>
-              <div class="hype-score" id="hypeScore"
-                style="font-size: 3rem; font-weight: 700; color: var(--accent-primary);">
-                65<span style="font-size: 1.5rem; color: var(--text-muted);">/100</span>
-              </div>
-              <div class="hype-meter"
-                style="height: 10px; background: var(--bg-glass); border-radius: 5px; margin-top: 0.5rem; overflow: hidden;">
-                <div id="hypeMeterFill"
-                  style="height: 100%; width: 65%; background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary)); border-radius: 5px;">
+                <div style="margin-top: 1rem;">
+                  <div class="data-label">Best Suited For:</div>
+                  <div class="verdict-tags" id="suitableTags">
+                    <span class="verdict-tag">Short-term traders</span>
+                    <span class="verdict-tag">High-risk memecoin investors</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div class="data-grid">
-              <div class="data-item">
-                <div class="data-label">Volume Spike</div>
-                <div class="data-value" id="volumeSpike">Normal</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Tx Velocity</div>
-                <div class="data-value" id="txVelocity">Moderate</div>
-              </div>
-            </div>
+            <!-- ========== ADVANCED FEATURES ========== -->
 
-            <div style="margin-top: 1.5rem;">
-              <div class="data-label" style="margin-bottom: 0.5rem;">Social Links</div>
-              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;" id="socialLinks">
-                <span class="verdict-tag" style="opacity: 0.5;">No social links found</span>
+            <!-- 8. Wallet Cluster Analysis (Bubble Maps) -->
+            <div class="card" style="grid-column: 1 / -1;">
+              <div class="card-header">
+                <div class="card-icon">🗺️</div>
+                <h3 class="card-title">Wallet Cluster Analysis</h3>
               </div>
-            </div>
-          </div>
 
-          <!-- 10. Developer Analysis -->
-          <div class="card" style="grid-column: 1 / -1;">
-            <div class="card-header">
-              <div class="card-icon">👤</div>
-              <h3 class="card-title">Developer Analysis</h3>
-            </div>
-
-            <div class="data-grid" style="grid-template-columns: repeat(4, 1fr);">
-              <div class="data-item">
-                <div class="data-label">Deployer Wallet</div>
-                <div class="data-value mono" id="deployerWallet" style="font-size: 0.85rem;">Data Pending ⏳</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Token Age</div>
-                <div class="data-value" id="tokenAge">Data Pending ⏳</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Pair Created</div>
-                <div class="data-value" id="pairCreated">Data Pending ⏳</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Dev Trust Score</div>
-                <div class="data-value" id="devTrustScore">
-                  <span class="dev-badge-container"></span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Dev Coin History Section -->
-            <div
-              style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-glass); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-              <div class="data-label" style="margin-bottom: 0.75rem;">📜 Developer Coin History</div>
               <div class="data-grid" style="grid-template-columns: repeat(3, 1fr);">
                 <div class="data-item">
-                  <div class="data-label">Other Coins Launched</div>
-                  <div class="data-value warning" id="devOtherCoins">Data Pending ⏳</div>
+                  <div class="data-label">Top 10 Holders</div>
+                  <div class="data-value warning" id="top10Holders">N/A</div>
                 </div>
                 <div class="data-item">
-                  <div class="data-label">Rug History</div>
-                  <div class="data-value" id="devRugHistory">Data Pending ⏳</div>
+                  <div class="data-label">Whale Concentration</div>
+                  <div class="data-value" id="whaleConcentration">Data Pending ⏳</div>
                 </div>
                 <div class="data-item">
-                  <div class="data-label">Success Rate</div>
-                  <div class="data-value" id="devSuccessRate">Data Pending ⏳</div>
+                  <div class="data-label">Cluster Risk</div>
+                  <div class="data-value" id="clusterRisk">Data Pending ⏳</div>
                 </div>
               </div>
-              <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
-                ⚠️ Click "Check Dev" to fetch live data from Solscan.
-              </p>
+
+              <!-- Holder Distribution Bar -->
+              <div style="margin-top: 1.5rem;">
+                <div class="data-label" style="margin-bottom: 0.5rem;">Holder Distribution</div>
+                <div class="holder-bar"
+                  style="display: flex; height: 24px; border-radius: 6px; overflow: hidden; background: var(--bg-glass);">
+                  <div id="holderBar1" style="background: linear-gradient(90deg, #ff4444, #ff6666); width: 30%;"
+                    title="Top 1-10 Holders"></div>
+                  <div id="holderBar2" style="background: linear-gradient(90deg, #ffaa00, #ffcc00); width: 20%;"
+                    title="Top 11-50 Holders"></div>
+                  <div id="holderBar3" style="background: linear-gradient(90deg, #00ff88, #00cc66); width: 50%;"
+                    title="Other Holders"></div>
+                </div>
+                <div
+                  style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">
+                  <span>🔴 Top 10: <span id="top10Pct">30%</span></span>
+                  <span>🟡 Top 11-50: <span id="top50Pct">20%</span></span>
+                  <span>🟢 Others: <span id="othersPct">50%</span></span>
+                </div>
+              </div>
+
+              <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <a href="#" target="_blank" id="bubblemapsLink" class="action-btn">
+                  🗺️ View Full Map
+                </a>
+                <a href="#" target="_blank" id="holdersLink" class="action-btn secondary">
+                  👥 All Holders
+                </a>
+              </div>
+
+              <!-- Interactive Wallet Bubble Canvas -->
+              <div class="bubble-canvas-container" style="margin-top: 1.5rem;">
+                <div class="data-label" style="margin-bottom: 0.5rem;">Live Wallet Cluster Visualization</div>
+                <canvas id="bubbleCanvas" width="600" height="300"
+                  style="width: 100%; background: var(--bg-glass); border-radius: var(--radius-md); border: 1px solid var(--border-color);"></canvas>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                  🔴 High concentration (whales) • 🟡 Medium holders • 🟢 Small wallets
+                </p>
+              </div>
             </div>
 
-            <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-              <a href="#" target="_blank" id="pumpfunLink" class="action-btn">
-                🚀 View on Pump.fun
-              </a>
-              <button id="checkDevBtn" class="action-btn">
-                🔍 Check Dev
-              </button>
-              <a href="#" target="_blank" id="devHistoryLink" class="action-btn secondary">
-                📜 Dev Wallet History
-              </a>
-              <a href="#" target="_blank" id="devTokensLink" class="action-btn secondary">
-                🪙 Dev's Other Tokens
-              </a>
+            <!-- 9. Social Pulse -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-icon">📱</div>
+                <h3 class="card-title">Social Pulse</h3>
+              </div>
+
+              <!-- Hype Score Meter -->
+              <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div class="data-label">Hype Score</div>
+                <div class="hype-score" id="hypeScore"
+                  style="font-size: 3rem; font-weight: 700; color: var(--accent-primary);">
+                  65<span style="font-size: 1.5rem; color: var(--text-muted);">/100</span>
+                </div>
+                <div class="hype-meter"
+                  style="height: 10px; background: var(--bg-glass); border-radius: 5px; margin-top: 0.5rem; overflow: hidden;">
+                  <div id="hypeMeterFill"
+                    style="height: 100%; width: 65%; background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary)); border-radius: 5px;">
+                  </div>
+                </div>
+              </div>
+
+              <div class="data-grid">
+                <div class="data-item">
+                  <div class="data-label">Volume Spike</div>
+                  <div class="data-value" id="volumeSpike">Normal</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Tx Velocity</div>
+                  <div class="data-value" id="txVelocity">Moderate</div>
+                </div>
+              </div>
+
+              <div style="margin-top: 1.5rem;">
+                <div class="data-label" style="margin-bottom: 0.5rem;">Social Links</div>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;" id="socialLinks">
+                  <span class="verdict-tag" style="opacity: 0.5;">No social links found</span>
+                </div>
+              </div>
             </div>
+
+            <!-- 10. Developer Analysis -->
+            <div class="card" style="grid-column: 1 / -1;">
+              <div class="card-header">
+                <div class="card-icon">👤</div>
+                <h3 class="card-title">Developer Analysis</h3>
+              </div>
+
+              <div class="data-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="data-item">
+                  <div class="data-label">Deployer Wallet</div>
+                  <div class="data-value mono" id="deployerWallet" style="font-size: 0.85rem;">Data Pending ⏳</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Token Age</div>
+                  <div class="data-value" id="tokenAge">Data Pending ⏳</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Pair Created</div>
+                  <div class="data-value" id="pairCreated">Data Pending ⏳</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Dev Trust Score</div>
+                  <div class="data-value" id="devTrustScore">
+                    <span class="dev-badge-container"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dev Coin History Section -->
+              <div
+                style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-glass); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <div class="data-label" style="margin-bottom: 0.75rem;">📜 Developer Coin History</div>
+                <div class="data-grid" style="grid-template-columns: repeat(3, 1fr);">
+                  <div class="data-item">
+                    <div class="data-label">Other Coins Launched</div>
+                    <div class="data-value warning" id="devOtherCoins">Data Pending ⏳</div>
+                  </div>
+                  <div class="data-item">
+                    <div class="data-label">Rug History</div>
+                    <div class="data-value" id="devRugHistory">Data Pending ⏳</div>
+                  </div>
+                  <div class="data-item">
+                    <div class="data-label">Success Rate</div>
+                    <div class="data-value" id="devSuccessRate">Data Pending ⏳</div>
+                  </div>
+                </div>
+                <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
+                  ⚠️ Click "Check Dev" to fetch live data from Solscan.
+                </p>
+              </div>
+
+              <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <a href="#" target="_blank" id="pumpfunLink" class="action-btn">
+                  🚀 View on Pump.fun
+                </a>
+                <button id="checkDevBtn" class="action-btn">
+                  🔍 Check Dev
+                </button>
+                <a href="#" target="_blank" id="devHistoryLink" class="action-btn secondary">
+                  📜 Dev Wallet History
+                </a>
+                <a href="#" target="_blank" id="devTokensLink" class="action-btn secondary">
+                  🪙 Dev's Other Tokens
+                </a>
+              </div>
+            </div>
+
+            <!-- 11. Smart Money / Top Traders -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-icon">💰</div>
+                <h3 class="card-title">Smart Money</h3>
+              </div>
+
+              <div class="data-grid">
+                <div class="data-item">
+                  <div class="data-label">Large Buys (24h)</div>
+                  <div class="data-value positive" id="largeBuys">0</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Large Sells (24h)</div>
+                  <div class="data-value negative" id="largeSells">0</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Whale Trend</div>
+                  <div class="data-value" id="whaleTrend">Neutral</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Smart Money Signal</div>
+                  <div class="data-value" id="smartMoneySignal">Neutral</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Fresh Wallets Buying</div>
+                  <div class="data-value" id="freshWallets">Data Pending ⏳</div>
+                </div>
+                <div class="data-item">
+                  <div class="data-label">Inflow Signal</div>
+                  <div class="data-value" id="inflowSignal">Neutral</div>
+                </div>
+              </div>
+
+              <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <a href="#" target="_blank" id="birdeyeLink" class="action-btn">
+                  🦅 View on Birdeye
+                </a>
+                <a href="#" target="_blank" id="topTradersLink" class="action-btn secondary">
+                  📊 Top Traders
+                </a>
+              </div>
+            </div>
+
           </div>
-
-          <!-- 11. Smart Money / Top Traders -->
-          <div class="card">
-            <div class="card-header">
-              <div class="card-icon">💰</div>
-              <h3 class="card-title">Smart Money</h3>
-            </div>
-
-            <div class="data-grid">
-              <div class="data-item">
-                <div class="data-label">Large Buys (24h)</div>
-                <div class="data-value positive" id="largeBuys">0</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Large Sells (24h)</div>
-                <div class="data-value negative" id="largeSells">0</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Whale Trend</div>
-                <div class="data-value" id="whaleTrend">Neutral</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Smart Money Signal</div>
-                <div class="data-value" id="smartMoneySignal">Neutral</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Fresh Wallets Buying</div>
-                <div class="data-value" id="freshWallets">Data Pending ⏳</div>
-              </div>
-              <div class="data-item">
-                <div class="data-label">Inflow Signal</div>
-                <div class="data-value" id="inflowSignal">Neutral</div>
-              </div>
-            </div>
-
-            <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-              <a href="#" target="_blank" id="birdeyeLink" class="action-btn">
-                🦅 View on Birdeye
-              </a>
-              <a href="#" target="_blank" id="topTradersLink" class="action-btn secondary">
-                📊 Top Traders
-              </a>
-            </div>
-          </div>
-
         </div>
-      </div>
     </section>
   </main>
 

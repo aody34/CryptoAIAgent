@@ -88,6 +88,141 @@ function init() {
 
     // Setup keyboard shortcuts
     setupKeyboardShortcuts();
+
+    // Setup tab navigation
+    setupTabs();
+}
+
+/**
+ * Setup tab navigation
+ */
+function setupTabs() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // This is a simplified version - tabs are visual only
+            // All content stays visible for now
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Scroll to relevant section based on tab
+            const tabName = btn.dataset.tab;
+            let targetId = null;
+            switch (tabName) {
+                case 'overview': targetId = 'tokenCard'; break;
+                case 'security': targetId = 'riskGauge'; break;
+                case 'momentum': targetId = 'momentumScore'; break;
+                case 'wallets': targetId = 'bubbleCanvas'; break;
+            }
+            if (targetId) {
+                const el = document.getElementById(targetId);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        });
+    });
+}
+
+/**
+ * Render wallet bubbles on canvas
+ * @param {Object} risks - Risk analysis data
+ */
+function renderBubbleCanvas(risks) {
+    const canvas = document.getElementById('bubbleCanvas');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Calculate holder percentages
+    const top10Pct = risks.holderConcentration.level === 'HIGH' ? 60 :
+        risks.holderConcentration.level === 'MEDIUM' ? 35 : 20;
+    const top50Pct = 25;
+    const othersPct = Math.max(0, 100 - top10Pct - top50Pct);
+
+    // Generate bubbles based on holder distribution
+    const bubbles = [];
+
+    // Top 10 whales (large red bubbles)
+    for (let i = 0; i < 8; i++) {
+        const size = (top10Pct / 10) * (15 + Math.random() * 15);
+        bubbles.push({
+            x: 80 + Math.random() * 150,
+            y: 60 + Math.random() * 180,
+            r: Math.max(10, size),
+            color: 'rgba(255, 68, 68, 0.7)',
+            border: '#ff4444'
+        });
+    }
+
+    // Top 11-50 holders (medium yellow bubbles)
+    for (let i = 0; i < 15; i++) {
+        const size = (top50Pct / 40) * (8 + Math.random() * 10);
+        bubbles.push({
+            x: 200 + Math.random() * 200,
+            y: 50 + Math.random() * 200,
+            r: Math.max(5, size),
+            color: 'rgba(255, 170, 0, 0.6)',
+            border: '#ffaa00'
+        });
+    }
+
+    // Small holders (small green bubbles)
+    for (let i = 0; i < 25; i++) {
+        const size = (othersPct / 50) * (3 + Math.random() * 6);
+        bubbles.push({
+            x: 350 + Math.random() * 230,
+            y: 40 + Math.random() * 220,
+            r: Math.max(3, size),
+            color: 'rgba(0, 255, 136, 0.5)',
+            border: '#00ff88'
+        });
+    }
+
+    // Draw connection lines between nearby bubbles
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < bubbles.length; i++) {
+        for (let j = i + 1; j < bubbles.length; j++) {
+            const dist = Math.hypot(bubbles[i].x - bubbles[j].x, bubbles[i].y - bubbles[j].y);
+            if (dist < 80) {
+                ctx.beginPath();
+                ctx.moveTo(bubbles[i].x, bubbles[i].y);
+                ctx.lineTo(bubbles[j].x, bubbles[j].y);
+                ctx.stroke();
+            }
+        }
+    }
+
+    // Draw bubbles
+    bubbles.forEach(bubble => {
+        ctx.beginPath();
+        ctx.arc(bubble.x, bubble.y, bubble.r, 0, Math.PI * 2);
+        ctx.fillStyle = bubble.color;
+        ctx.fill();
+        ctx.strokeStyle = bubble.border;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    });
+
+    // Add labels
+    ctx.font = '11px JetBrains Mono';
+    ctx.fillStyle = '#ff6666';
+    ctx.fillText('WHALES', 60, 25);
+    ctx.fillText(`~${top10Pct}%`, 60, 40);
+
+    ctx.fillStyle = '#ffcc00';
+    ctx.fillText('MID', 280, 25);
+    ctx.fillText(`~${top50Pct}%`, 280, 40);
+
+    ctx.fillStyle = '#00ff88';
+    ctx.fillText('RETAIL', 480, 25);
+    ctx.fillText(`~${othersPct}%`, 480, 40);
 }
 
 /**
@@ -572,6 +707,9 @@ function renderTokenData(pair, aggregated) {
 
     // Update evidence badges with specific data
     updateEvidenceBadges(pair, risks);
+
+    // Render interactive wallet bubble canvas
+    renderBubbleCanvas(risks);
 
     // Individual risks
     setElementText('rugPullRisk', RISK_LEVELS[risks.rugPull.level].label);

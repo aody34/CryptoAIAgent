@@ -18,13 +18,30 @@ export class URLRouter {
     init(onTokenLoad) {
         this.onTokenLoad = onTokenLoad;
 
-        // Check URL on load
-        this.checkInitialRoute();
+        // Check URL on load - use multiple strategies to ensure it works
+        if (document.readyState === 'complete') {
+            this.checkInitialRoute();
+        } else {
+            window.addEventListener('load', () => {
+                this.checkInitialRoute();
+            });
+        }
 
         // Handle back/forward browser navigation
         window.addEventListener('popstate', (event) => {
             if (event.state?.token) {
                 this.onTokenLoad(event.state.token);
+            }
+        });
+
+        // Also check hash changes
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash;
+            if (hash) {
+                const hashClean = hash.replace('#', '').replace('token=', '');
+                if (hashClean.length >= 32 && this.onTokenLoad) {
+                    this.onTokenLoad(hashClean);
+                }
             }
         });
     }
@@ -36,26 +53,31 @@ export class URLRouter {
         const path = window.location.pathname;
         const hash = window.location.hash;
 
+        console.log('[Router] Checking initial route:', { path, hash });
+
         // Check path format: /token/ADDRESS
         const pathMatch = path.match(/\/token\/([a-zA-Z0-9]+)/);
         if (pathMatch && pathMatch[1]) {
+            console.log('[Router] Found token in path:', pathMatch[1]);
             setTimeout(() => {
                 if (this.onTokenLoad) {
                     this.onTokenLoad(pathMatch[1]);
                 }
-            }, 100);
+            }, 300);
             return;
         }
 
         // Check hash format: #ADDRESS or #token=ADDRESS
-        if (hash) {
+        if (hash && hash.length > 1) {
             const hashClean = hash.replace('#', '').replace('token=', '');
+            console.log('[Router] Found hash:', hashClean, 'Length:', hashClean.length);
             if (hashClean.length >= 32) {
+                console.log('[Router] Triggering token load from hash');
                 setTimeout(() => {
                     if (this.onTokenLoad) {
                         this.onTokenLoad(hashClean);
                     }
-                }, 100);
+                }, 300);
                 return;
             }
         }
@@ -64,11 +86,12 @@ export class URLRouter {
         const params = new URLSearchParams(window.location.search);
         const tokenParam = params.get('token') || params.get('address') || params.get('ca');
         if (tokenParam && tokenParam.length >= 32) {
+            console.log('[Router] Found token in query params:', tokenParam);
             setTimeout(() => {
                 if (this.onTokenLoad) {
                     this.onTokenLoad(tokenParam);
                 }
-            }, 100);
+            }, 300);
         }
     }
 
