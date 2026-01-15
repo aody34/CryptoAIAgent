@@ -40,6 +40,7 @@ const trendingSection = document.getElementById('trendingSection');
 const freshPairsList = document.getElementById('freshPairsList');
 const shareBtn = document.getElementById('shareBtn');
 const checkDevBtn = document.getElementById('checkDevBtn');
+const copyAddressBtn = document.getElementById('copyAddressBtn');
 const toast = document.getElementById('toast');
 
 // Sidebar elements
@@ -81,6 +82,12 @@ function init() {
 
     // Setup dev check button
     setupDevCheckButton();
+
+    // Setup copy address button
+    setupCopyAddressButton();
+
+    // Setup keyboard shortcuts
+    setupKeyboardShortcuts();
 }
 
 /**
@@ -160,6 +167,70 @@ function setupDevCheckButton() {
             }
         });
     }
+}
+
+/**
+ * Setup copy address button functionality
+ */
+function setupCopyAddressButton() {
+    if (copyAddressBtn) {
+        copyAddressBtn.addEventListener('click', async () => {
+            const address = document.getElementById('tokenAddress')?.textContent;
+            if (!address || address === 'Contract Address') return;
+
+            try {
+                await navigator.clipboard.writeText(address);
+                copyAddressBtn.classList.add('copied');
+                copyAddressBtn.textContent = '✓';
+                showToast('Contract address copied!');
+
+                setTimeout(() => {
+                    copyAddressBtn.classList.remove('copied');
+                    copyAddressBtn.textContent = '📋';
+                }, 2000);
+            } catch (err) {
+                console.error('Copy failed:', err);
+            }
+        });
+    }
+}
+
+/**
+ * Setup keyboard shortcuts for pro terminal feel
+ */
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Don't trigger if typing in input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            // Escape to blur input
+            if (e.key === 'Escape') {
+                e.target.blur();
+            }
+            return;
+        }
+
+        switch (e.key) {
+            case '/':
+                e.preventDefault();
+                tokenInput.focus();
+                break;
+            case 'r':
+            case 'R':
+                e.preventDefault();
+                if (currentTokenData) {
+                    analyzeToken(currentTokenData.pair.baseToken.address);
+                    showToast('Refreshing data...');
+                } else {
+                    freshPairs.refresh();
+                    showToast('Refreshing fresh pairs...');
+                }
+                break;
+            case 'Escape':
+                tokenInput.value = '';
+                tokenInput.blur();
+                break;
+        }
+    });
 }
 
 /**
@@ -311,6 +382,57 @@ function setRiskMeter(id, level) {
 }
 
 /**
+ * Update evidence badges with specific data
+ * @param {Object} pair - Token pair data
+ * @param {Object} risks - Risk analysis
+ */
+function updateEvidenceBadges(pair, risks) {
+    const liquidity = pair.liquidity?.usd || 0;
+    const pairAge = pair.pairCreatedAt ? Math.floor((Date.now() - pair.pairCreatedAt) / (1000 * 60 * 60 * 24)) : 0;
+
+    // LP Badge
+    const lpBadge = document.getElementById('evidenceLp');
+    if (lpBadge) {
+        const lpText = liquidity >= 100000 ? `LP: ${formatCurrency(liquidity)}` :
+            liquidity >= 10000 ? `LP: ${formatCurrency(liquidity)}` :
+                `LP: ${formatCurrency(liquidity)}`;
+        lpBadge.textContent = lpText;
+        lpBadge.classList.remove('safe', 'warning', 'danger');
+        lpBadge.classList.add(liquidity >= 50000 ? 'safe' : liquidity >= 10000 ? 'warning' : 'danger');
+    }
+
+    // Top 10 Holders Badge
+    const holdersBadge = document.getElementById('evidenceHolders');
+    if (holdersBadge) {
+        const top10Pct = risks.holderConcentration.level === 'HIGH' ? 60 :
+            risks.holderConcentration.level === 'MEDIUM' ? 35 : 20;
+        holdersBadge.textContent = `Top10: ~${top10Pct}%`;
+        holdersBadge.classList.remove('safe', 'warning', 'danger');
+        holdersBadge.classList.add(top10Pct <= 20 ? 'safe' : top10Pct <= 40 ? 'warning' : 'danger');
+    }
+
+    // Dev Badge
+    const devBadge = document.getElementById('evidenceDev');
+    if (devBadge) {
+        devBadge.textContent = 'Dev: Check';
+        devBadge.classList.remove('safe', 'warning', 'danger');
+        devBadge.classList.add('warning');
+    }
+
+    // Age Badge
+    const ageBadge = document.getElementById('evidenceAge');
+    if (ageBadge) {
+        let ageText = pairAge < 1 ? 'Age: <1d' :
+            pairAge < 7 ? `Age: ${pairAge}d` :
+                pairAge < 30 ? `Age: ${Math.floor(pairAge / 7)}w` :
+                    `Age: ${Math.floor(pairAge / 30)}m`;
+        ageBadge.textContent = ageText;
+        ageBadge.classList.remove('safe', 'warning', 'danger');
+        ageBadge.classList.add(pairAge >= 14 ? 'safe' : pairAge >= 3 ? 'warning' : 'danger');
+    }
+}
+
+/**
  * Render token data to UI
  * @param {Object} pair - Best trading pair data
  * @param {Object} aggregated - Aggregated data from all pairs
@@ -436,10 +558,20 @@ function renderTokenData(pair, aggregated) {
     // Trust vs Hype Analysis
     renderTrustVsHype(pair, sentiment, risks);
 
-    // Overall risk score
+    // Overall risk score with gauge needle animation
     const riskScoreEl = document.getElementById('overallRiskScore');
-    riskScoreEl.innerHTML = `${risks.overall.score}<span>/10</span>`;
+    riskScoreEl.textContent = `${risks.overall.score}/10`;
     riskScoreEl.style.color = RISK_LEVELS[risks.overall.level].color;
+
+    // Animate the risk gauge needle (-90deg = 0, 0deg = 5, 90deg = 10)
+    const riskNeedle = document.getElementById('riskNeedle');
+    if (riskNeedle) {
+        const rotation = -90 + (risks.overall.score * 18); // 18 degrees per point
+        riskNeedle.style.transform = `translateX(-50%) rotate(${rotation}deg)`;
+    }
+
+    // Update evidence badges with specific data
+    updateEvidenceBadges(pair, risks);
 
     // Individual risks
     setElementText('rugPullRisk', RISK_LEVELS[risks.rugPull.level].label);

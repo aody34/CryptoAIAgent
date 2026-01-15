@@ -98,6 +98,11 @@
           <p class="search-hint">
             ⚠️ Only memecoins on Dexscreener & Axiom Exchange • No BTC/ETH/Large Caps
           </p>
+          <div class="keyboard-hints">
+            <span class="keyboard-hint"><kbd>/</kbd> Focus search</span>
+            <span class="keyboard-hint"><kbd>R</kbd> Refresh data</span>
+            <span class="keyboard-hint"><kbd>Esc</kbd> Clear</span>
+          </div>
         </div>
 
         <!-- Trending Section (Default View) -->
@@ -107,11 +112,16 @@
       </div>
     </section>
 
-    <!-- Loading State -->
+    <!-- Loading State (Skeleton Loaders) -->
     <div class="loading" id="loadingState">
       <div class="container">
-        <div class="loading-spinner"></div>
-        <p class="loading-text">Fetching live data from Dexscreener...</p>
+        <div class="skeleton-grid">
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+        </div>
+        <p class="loading-text" style="text-align: center; margin-top: 1rem;">Fetching live data...</p>
       </div>
     </div>
 
@@ -138,7 +148,10 @@
                   <span id="tokenName">Token Name</span>
                   <span class="token-ticker" id="tokenTicker">($TICKER)</span>
                 </h2>
-                <p class="token-address" id="tokenAddress">Contract Address</p>
+                <div class="address-row">
+                  <p class="token-address" id="tokenAddress">Contract Address</p>
+                  <button class="copy-btn" id="copyAddressBtn" title="Copy contract address">📋</button>
+                </div>
                 <div class="chain-badge" id="chainBadge">
                   <span>⛓️</span>
                   <span id="chainName">Solana</span>
@@ -403,8 +416,16 @@
               <h3 class="card-title">Risk Analysis</h3>
             </div>
 
-            <div class="risk-score" id="overallRiskScore">
-              5<span>/10</span>
+            <!-- Risk Gauge Speedometer -->
+            <div class="risk-gauge" id="riskGauge">
+              <div class="risk-gauge-bg"></div>
+              <div class="risk-gauge-needle" id="riskNeedle"></div>
+              <div class="risk-gauge-value" id="overallRiskScore">5/10</div>
+              <div class="risk-gauge-labels">
+                <span>SAFE</span>
+                <span>CAUTION</span>
+                <span>DANGER</span>
+              </div>
             </div>
 
             <div style="margin-top: 1.5rem;">
@@ -458,9 +479,16 @@
                 </div>
               </div>
 
+              <!-- Evidence-Based Badges -->
+              <div class="evidence-badges" id="evidenceBadges">
+                <span class="evidence-badge" id="evidenceLp">LP: --</span>
+                <span class="evidence-badge" id="evidenceHolders">Top10: --%</span>
+                <span class="evidence-badge" id="evidenceDev">Dev: --</span>
+                <span class="evidence-badge" id="evidenceAge">Age: --</span>
+              </div>
+
               <p class="verdict-text" id="verdictSummary">
-                This token shows mixed signals with moderate risk levels. Further analysis recommended before any
-                investment decisions.
+                Analyzing token metrics...
               </p>
 
               <div style="margin-top: 1rem;">
