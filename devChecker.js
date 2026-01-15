@@ -1,9 +1,7 @@
 // ===========================================
 // MEMERADAR - DEV CHECKER MODULE
-// Automated Developer Trust Score via Solscan
+// Automated Developer Trust Score via Solscan & On-Chain Metrics
 // ===========================================
-
-import { CONFIG } from './config.js';
 
 /**
  * DevChecker - Handles developer wallet analysis
@@ -53,20 +51,13 @@ export class DevChecker {
      * Analyze developer wallet for a token
      * @param {string} tokenAddress - Token contract address
      * @param {string} chainId - Chain identifier
+     * @param {Object} pairData - Current token pair data (optional)
      * @returns {Promise<Object>} - Dev analysis result
      */
-    async analyzeDevWallet(tokenAddress, chainId) {
+    async analyzeDevWallet(tokenAddress, chainId, pairData = null) {
         // Only works for Solana currently
         if (chainId !== 'solana') {
-            return {
-                status: 'unsupported',
-                message: 'Dev check only available for Solana',
-                badge: null,
-                deployerWallet: null,
-                otherTokens: 0,
-                rugCount: 0,
-                successRate: null
-            };
+            return this.getDefaultAnalysis("Only Solana Supported");
         }
 
         // Check cache first
@@ -76,43 +67,22 @@ export class DevChecker {
         }
 
         try {
-            // Fetch token info from Solscan (free public endpoint)
+            // Fetch token info from Solscan (free public endpoint) to get creator
             const tokenInfoUrl = `https://api.solscan.io/token/meta?token=${tokenAddress}`;
             const response = await fetch(tokenInfoUrl);
+            const data = response.ok ? await response.json() : null;
 
-            if (!response.ok) {
-                throw new Error('Solscan API error');
-            }
-
-            const data = await response.json();
-
-            // Extract deployer/creator info if available
+            // Extract deployer/creator info
             const creator = data?.data?.creator || data?.data?.mintAuthority || null;
 
-            if (!creator) {
-                const result = {
-                    status: 'unknown',
-                    message: 'Creator wallet not found',
-                    badge: 'UNVERIFIED',
-                    badgeClass: 'warning',
-                    deployerWallet: null,
-                    otherTokens: 0,
-                    rugCount: 0,
-                    successRate: null,
-                    solscanLink: `https://solscan.io/token/${tokenAddress}`
-                };
-                this.setCachedDevData(tokenAddress, result);
-                return result;
-            }
-
-            // Try to get creator's other tokens
-            const devAnalysis = await this.analyzeCreatorHistory(creator);
+            // Calculate Trust Score based on available metrics
+            const analysis = await this.calculateTrustScore(creator, pairData);
 
             const result = {
                 status: 'analyzed',
-                ...devAnalysis,
-                deployerWallet: creator,
-                solscanLink: `https://solscan.io/account/${creator}`,
+                ...analysis,
+                deployerWallet: creator || 'Unknown',
+                solscanLink: creator ? `https://solscan.io/account/${creator}` : `https://solscan.io/token/${tokenAddress}`,
                 tokenLink: `https://solscan.io/token/${tokenAddress}`
             };
 
@@ -121,93 +91,111 @@ export class DevChecker {
 
         } catch (error) {
             console.error('Dev analysis error:', error);
-
-            const result = {
-                status: 'error',
-                message: 'Unable to fetch dev data',
-                badge: 'CHECK MANUALLY',
-                badgeClass: 'warning',
-                deployerWallet: null,
-                otherTokens: 0,
-                rugCount: 0,
-                successRate: null,
-                solscanLink: `https://solscan.io/token/${tokenAddress}`
-            };
-
-            return result;
+            // Even on error, try to return a score based on pairData if available
+            if (pairData) {
+                const analysis = await this.calculateTrustScore(null, pairData);
+                return {
+                    status: 'partial',
+                    ...analysis,
+                    deployerWallet: 'Unknown',
+                    solscanLink: `https://solscan.io/token/${tokenAddress}`
+                };
+            }
+            return this.getDefaultAnalysis("API Error");
         }
     }
 
     /**
-     * Analyze creator's token history
-     * @param {string} creatorAddress - Creator wallet address
-     * @returns {Promise<Object>} - Analysis result
+     * Calculate Trust Score and Badge
+     * @returns {Promise<Object>}
      */
-    async analyzeCreatorHistory(creatorAddress) {
-        try {
-            // Try to get SPL token accounts created by this wallet
-            // Note: Full analysis would require Solscan Pro API
-            // For now, we'll use heuristics based on available data
+    async calculateTrustScore(creatorAddress, pairData) {
+        let score = 0;
+        let checks = 0;
+        let walletBalance = 0;
 
-            const accountUrl = `https://api.solscan.io/account?address=${creatorAddress}`;
-            const response = await fetch(accountUrl);
+        // 1. Check Wallet Balance (if creator known)
+        if (creatorAddress) {
+            try {
+                const accountUrl = `https://api.solscan.io/account?address=${creatorAddress}`;
+                const resp = await fetch(accountUrl);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    walletBalance = (data?.data?.lamports || 0) / 1e9;
 
-            if (!response.ok) {
-                return this.getDefaultAnalysis();
-            }
-
-            const data = await response.json();
-
-            // Check account age and activity
-            const accountData = data?.data || {};
-            const lamports = accountData.lamports || 0;
-            const solBalance = lamports / 1e9;
-
-            // Heuristics for trust score:
-            // - Very low balance after launch = might have dumped
-            // - Account with history = more trustworthy
-
-            let badge = 'UNVERIFIED';
-            let badgeClass = 'warning';
-            let message = 'Manual verification recommended';
-
-            if (solBalance > 10) {
-                badge = 'ACTIVE DEV';
-                badgeClass = 'positive';
-                message = 'Developer wallet has significant balance';
-            } else if (solBalance > 1) {
-                badge = 'MODERATE';
-                badgeClass = 'warning';
-                message = 'Developer wallet has some activity';
-            } else if (solBalance < 0.1) {
-                badge = 'LOW BALANCE ⚠️';
-                badgeClass = 'negative';
-                message = 'Developer wallet nearly empty - potential dump risk';
-            }
-
-            return {
-                badge,
-                badgeClass,
-                message,
-                otherTokens: 'Check Solscan',
-                rugCount: 'Unknown',
-                successRate: 'Verify manually'
-            };
-
-        } catch (error) {
-            console.error('Creator history error:', error);
-            return this.getDefaultAnalysis();
+                    if (walletBalance > 5) score += 20; // Rich dev = likely legit or long-term
+                    else if (walletBalance > 1) score += 10;
+                    else if (walletBalance < 0.1) score -= 10; // Dust wallet = sus
+                }
+            } catch (e) { console.log('Balance check failed'); }
         }
+
+        // 2. Liquidity Health (from pairData)
+        if (pairData) {
+            const liq = pairData.liquidity?.usd || 0;
+            if (liq > 50000) score += 20;
+            else if (liq > 10000) score += 10;
+            else if (liq < 1000) score -= 20;
+        }
+
+        // 3. Volume (Active trading)
+        if (pairData) {
+            const vol = pairData.volume?.h24 || 0;
+            if (vol > 100000) score += 20;
+            else if (vol > 10000) score += 10;
+        }
+
+        // 4. Age (Older = Better)
+        if (pairData && pairData.pairCreatedAt) {
+            const hoursOld = (Date.now() - pairData.pairCreatedAt) / (1000 * 60 * 60);
+            if (hoursOld > 72) score += 20; // > 3 days
+            else if (hoursOld > 24) score += 10;
+            else if (hoursOld < 1) score -= 10; // Brand new
+        }
+
+        // 5. Socials (If present)
+        if (pairData && (pairData.info?.socials?.length > 0)) {
+            score += 20;
+        }
+
+        // Normalize Score (0-100)
+        // Base is 50
+        let finalScore = 40 + score;
+        finalScore = Math.min(100, Math.max(0, finalScore));
+
+        // Determine Badge
+        let badge = 'UNKNOWN';
+        let badgeClass = 'warning';
+
+        if (finalScore >= 80) {
+            badge = 'TRUSTED DEV 🟢';
+            badgeClass = 'positive';
+        } else if (finalScore >= 50) {
+            badge = 'AVERAGE 🟡';
+            badgeClass = 'warning';
+        } else {
+            badge = 'HIGH RISK 🔴';
+            badgeClass = 'negative';
+        }
+
+        return {
+            badge,
+            badgeClass,
+            message: `Trust Score: ${finalScore}/100 based on On-Chain Data`,
+            otherTokens: 'Scan Required (Pro)',
+            rugCount: 'Scan Required (Pro)',
+            successRate: `${finalScore}%` // Proxy for success rate
+        };
     }
 
     /**
      * Get default analysis when data unavailable
      */
-    getDefaultAnalysis() {
+    getDefaultAnalysis(msg) {
         return {
             badge: 'VERIFY ⚠️',
             badgeClass: 'warning',
-            message: 'Check dev history manually',
+            message: msg || 'Check dev manually',
             otherTokens: 'Unknown',
             rugCount: 'Unknown',
             successRate: 'Unknown'
@@ -229,16 +217,6 @@ export class DevChecker {
         const color = colorMap[analysis.badgeClass] || colorMap.warning;
 
         return `<span class="dev-badge" style="color: ${color}; border-color: ${color};">${analysis.badge}</span>`;
-    }
-
-    /**
-     * Check if a dev appears to be a serial rugger
-     * @param {Object} analysis - Dev analysis result
-     * @returns {boolean}
-     */
-    isSerialRugger(analysis) {
-        // If we detected low balance immediately after launch, flag as potential rugger
-        return analysis.badge === 'LOW BALANCE ⚠️' || analysis.badge === 'SERIAL RUGGER';
     }
 }
 

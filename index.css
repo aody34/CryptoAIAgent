@@ -741,19 +741,19 @@ h4 {
 /* ===== PROGRESS BAR ===== */
 .loading-content {
   text-align: center;
-  padding: var(--spacing-xl);
+  padding: var(--spacing-lg);
 }
 
 .loading-icon {
   font-size: 3rem;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 .loading-hint {
   font-size: 0.8rem;
   color: var(--text-muted);
-  margin-top: var(--spacing-md);
+  margin-top: var(--spacing-sm);
 }
 
 .progress-bar-container {
@@ -762,7 +762,7 @@ h4 {
   height: 8px;
   background: var(--bg-glass);
   border-radius: var(--radius-full);
-  margin: var(--spacing-md) auto;
+  margin: var(--spacing-sm) auto;
   overflow: hidden;
   border: 1px solid var(--border-color);
 }
@@ -774,47 +774,13 @@ h4 {
   transition: width 0.3s ease;
 }
 
-/* ===== RECENTLY ANALYZED ===== */
-.recently-analyzed {
-  max-width: 600px;
-  margin: var(--spacing-lg) auto;
-  padding: 0 var(--spacing-lg);
+/* Reduced spacing for tighter layout */
+.hero {
+  padding-bottom: var(--spacing-md);
 }
 
-.recent-header {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-bottom: var(--spacing-sm);
-}
-
-.recent-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-}
-
-.recent-item {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: var(--bg-glass);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.recent-item:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-  background: var(--accent-dim);
-}
-
-.no-recent {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  text-align: center;
+.loading {
+  padding: var(--spacing-md) 0;
 }
 
 @keyframes pulse {

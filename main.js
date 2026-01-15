@@ -92,8 +92,31 @@ function init() {
     // Setup tab navigation
     setupTabs();
 
-    // Render recently analyzed section
-    renderRecentlyAnalyzed();
+    // Initialize Fresh Pairs Sidebar
+    if (freshPairs && freshPairsList) {
+        freshPairs.init(freshPairsList, (address) => {
+            tokenInput.value = address;
+            analyzeToken(address);
+            // On mobile, close sidebar after selection
+            const sidebar = document.getElementById('freshPairsSidebar');
+            if (window.innerWidth <= 768 && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+            }
+        });
+
+        // Setup refresh button
+        if (sidebarRefresh) {
+            sidebarRefresh.addEventListener('click', () => {
+                freshPairs.refresh();
+                // Add rotation animation
+                const icon = sidebarRefresh.querySelector('.icon');
+                if (icon) {
+                    icon.style.transition = 'transform 0.5s ease';
+                    icon.style.transform = `rotate(${Date.now()}deg)`;
+                }
+            });
+        }
+    }
 }
 
 /**
@@ -282,6 +305,9 @@ function setupShareButton() {
 /**
  * Setup dev check button functionality
  */
+/**
+ * Setup dev check button functionality
+ */
 function setupDevCheckButton() {
     if (checkDevBtn) {
         checkDevBtn.addEventListener('click', async () => {
@@ -291,9 +317,11 @@ function setupDevCheckButton() {
             checkDevBtn.innerHTML = '⏳ Checking...';
 
             try {
+                // Pass token address, chain, and pair data for analysis
                 const analysis = await devChecker.analyzeDevWallet(
                     currentTokenData.pair.baseToken.address,
-                    currentTokenData.pair.chainId
+                    currentTokenData.pair.chainId,
+                    currentTokenData.pair
                 );
 
                 updateDevAnalysisUI(analysis);
@@ -304,6 +332,37 @@ function setupDevCheckButton() {
                 checkDevBtn.innerHTML = '🔍 Check Dev';
             }
         });
+    }
+}
+
+/**
+ * Update the Dev Analysis UI with results
+ * @param {Object} analysis - Dev analysis results
+ */
+function updateDevAnalysisUI(analysis) {
+    if (!analysis) return;
+
+    // Update Trust Score Badge
+    const devTrustEl = document.getElementById('devTrustScore');
+    if (devTrustEl) {
+        devTrustEl.innerHTML = devChecker.getBadgeHTML(analysis);
+    }
+
+    // Update numerical metrics
+    setElementText('devOtherCoins', analysis.otherTokens);
+    setElementText('devRugHistory', analysis.rugCount);
+    setElementText('devSuccessRate', analysis.successRate); // Now shows Trust Score %
+
+    // Update message/tooltip if possible (or just log it)
+    console.log('[Dev Check]', analysis.message);
+
+    // Update deployer wallet link if known
+    if (analysis.deployerWallet && analysis.deployerWallet !== 'Unknown') {
+        const walletEl = document.getElementById('deployerWallet');
+        if (walletEl) {
+            walletEl.textContent = analysis.deployerWallet.slice(0, 4) + '...' + analysis.deployerWallet.slice(-4);
+            walletEl.title = analysis.deployerWallet;
+        }
     }
 }
 
@@ -1293,9 +1352,6 @@ async function analyzeToken(query) {
             showError('❌ Token not found on Dexscreener. This may be a very new launch (< 5 mins old) or an invalid address. Check the CA on Solscan to verify it exists.');
             return;
         }
-
-        // Save to recently analyzed
-        saveRecentlyAnalyzed(query);
 
         // Filter to supported chains and memecoins
         const filteredPairs = result.pairs.filter(pair => {
