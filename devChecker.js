@@ -3,7 +3,7 @@
 // Automated Developer Trust Score via Solscan & On-Chain Metrics
 // ===========================================
 
-import { solanaRPC } from './rpc.js';
+// import { solanaRPC } from './rpc.js';
 
 /**
  * DevChecker - Handles developer wallet analysis
@@ -116,17 +116,13 @@ export class DevChecker {
         let checks = 0;
         let walletBalance = 0;
 
-        // 1. Check Wallet Balance (if creator known) using fast RPC
-        if (creatorAddress) {
-            try {
-                // Use Helius RPC for instant balance check
-                walletBalance = await solanaRPC.getBalance(creatorAddress);
-
-                if (walletBalance > 5) score += 20; // Rich dev = likely legit or long-term
-                else if (walletBalance > 1) score += 10;
-                else if (walletBalance < 0.1) score -= 10; // Dust wallet = sus
-            } catch (e) { console.log('RPC Balance check failed', e); }
-        }
+        // 1. Check Wallet Balance - DISABLED TEMPORARILY due to RPC crash
+        // if (creatorAddress) {
+        //    try {
+        //        walletBalance = await solanaRPC.getBalance(creatorAddress);
+        //        ...
+        //    } catch (e) { ... }
+        // }
 
         // 2. Liquidity Health (from pairData)
         if (pairData) {
@@ -179,7 +175,7 @@ export class DevChecker {
         return {
             badge,
             badgeClass,
-            message: `Trust Score: ${finalScore}/100 based on On-Chain Metrics`,
+            message: `Trust Score: ${finalScore}/100`,
             otherTokens: 'Scan Required (Pro)',
             rugCount: 'Scan Required (Pro)',
             successRate: `${finalScore}%` // Proxy for success rate

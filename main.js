@@ -20,7 +20,7 @@ import { FreshPairsManager } from './freshPairs.js';
 import { TrendingManager } from './trending.js';
 import { DevChecker } from './devChecker.js';
 import { URLRouter } from './router.js';
-import { solanaRPC } from './rpc.js';
+// import { solanaRPC } from './rpc.js';
 
 // Initialize API and modules
 const api = new DexscreenerAPI();
@@ -1441,7 +1441,7 @@ async function analyzeToken(query) {
         showResults();
 
         // Trigger Real On-Chain Wallet Analysis (Async)
-        loadRealWalletData(bestPair.baseToken.address);
+        // loadRealWalletData(bestPair.baseToken.address);
 
         // Scroll to results
         resultsSection.scrollIntoView({ behavior: 'smooth' });
