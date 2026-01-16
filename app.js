@@ -1131,6 +1131,25 @@ function renderWalletAnalysis(pair, token, risks) {
 
     const holdersLink = document.getElementById('holdersLink');
     holdersLink.href = getExplorerHoldersLink(pair.chainId, token.address);
+
+    // Load Bubblemaps iframe with real visualization
+    const bubblemapsIframe = document.getElementById('bubblemapsIframe');
+    const bubblemapsLoading = document.getElementById('bubblemapsLoading');
+    if (bubblemapsIframe) {
+        // Only load for Solana tokens
+        if (pair.chainId === 'solana') {
+            const iframeSrc = `https://iframe.bubblemaps.io/map?address=${token.address}&chain=solana&partnerId=memeradar`;
+            bubblemapsIframe.src = iframeSrc;
+            if (bubblemapsLoading) bubblemapsLoading.style.display = 'none';
+        } else {
+            // Not supported chain - show message
+            bubblemapsIframe.src = 'about:blank';
+            if (bubblemapsLoading) {
+                bubblemapsLoading.style.display = 'block';
+                bubblemapsLoading.textContent = `Bubblemaps not available for ${pair.chainId}`;
+            }
+        }
+    }
 }
 
 /**
