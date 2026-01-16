@@ -184,10 +184,6 @@ export class FreshPairsManager {
                         ${pair.score}
                     </div>
                 </div>
-                <div class="fresh-pair-actions">
-                    <a href="https://axiom.exchange/t/${pair.address}" target="_blank" title="Trade on Axiom" class="action-btn axiom">⚔️</a>
-                    <a href="https://dexscreener.com/solana/${pair.address}" target="_blank" title="View on Dexscreener" class="action-btn ds">🦅</a>
-                </div>
             </div>
         `).join('');
 

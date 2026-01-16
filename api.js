@@ -147,7 +147,6 @@ export class DexscreenerAPI {
             console.log('[API] Token-pairs endpoint failed:', e.message);
         }
 
-        // Strategy 3: Try the search as last resort
         try {
             const response = await fetch(
                 `${this.baseUrl}${CONFIG.API.DEXSCREENER_SEARCH}?q=${address}`
@@ -161,6 +160,44 @@ export class DexscreenerAPI {
             }
         } catch (e) {
             console.log('[API] Search endpoint failed:', e.message);
+        }
+
+        // Strategy 4: Try Pump.fun API for very new tokens
+        try {
+            const response = await fetch(
+                `https://frontend-api.pump.fun/coins/${address}`
+            );
+            if (response.ok) {
+                const data = await response.json();
+                console.log('[API] Pump.fun endpoint response:', data);
+                if (data && data.mint) {
+                    // Convert Pump.fun data to our format
+                    return {
+                        pairs: [{
+                            chainId: 'solana',
+                            pairAddress: data.bonding_curve || address,
+                            baseToken: {
+                                address: data.mint,
+                                name: data.name || 'Unknown',
+                                symbol: data.symbol || '???'
+                            },
+                            priceUsd: data.usd_market_cap ? (data.usd_market_cap / 1000000000).toString() : '0',
+                            liquidity: { usd: data.usd_market_cap || 0 },
+                            volume: { h24: 0 },
+                            marketCap: data.usd_market_cap || 0,
+                            fdv: data.usd_market_cap || 0,
+                            pairCreatedAt: data.created_timestamp || Date.now(),
+                            info: {
+                                imageUrl: data.image_uri || null,
+                                socials: data.twitter ? [{ type: 'twitter', url: data.twitter }] : []
+                            }
+                        }],
+                        source: 'pumpfun'
+                    };
+                }
+            }
+        } catch (e) {
+            console.log('[API] Pump.fun endpoint failed:', e.message);
         }
 
         // No data found anywhere
