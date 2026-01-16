@@ -37,8 +37,8 @@ export class FreshPairsManager {
         this.isLoading = true;
 
         try {
-            // Use the token-boosts endpoint for trending/new tokens
-            const response = await fetch(`${CONFIG.API.DEXSCREENER_BASE}/token-boosts/top/v1`);
+            // Use the latest token profiles endpoint - returns newest tokens
+            const response = await fetch(`${CONFIG.API.DEXSCREENER_BASE}/token-profiles/latest/v1`);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch fresh pairs');
@@ -46,28 +46,32 @@ export class FreshPairsManager {
 
             const data = await response.json();
 
-            // Filter to Solana pairs only and get recent ones
-            this.pairs = (data || [])
-                .filter(item => item.chainId === 'solana')
-                .slice(0, 15)
-                .map(item => {
-                    const iconUrl = item.icon ||
-                        (item.tokenAddress ? `https://dd.dexscreener.com/ds-data/tokens/solana/${item.tokenAddress}.png` : null);
+            // Filter to Solana pairs only
+            let solanaPairs = (data || []).filter(item => item.chainId === 'solana');
 
-                    return {
-                        address: item.tokenAddress,
-                        name: item.description || item.tokenAddress.slice(0, 8),
-                        symbol: item.symbol || '???',
-                        icon: iconUrl,
-                        url: item.url,
-                        score: this.calculateQuickScore(item)
-                    };
-                });
+            // Shuffle the array to get different tokens on each refresh
+            solanaPairs = this.shuffleArray(solanaPairs);
+
+            // Take top 15 after shuffle
+            this.pairs = solanaPairs.slice(0, 15).map(item => {
+                // Build image URL from Dexscreener CDN
+                const iconUrl = item.icon ||
+                    (item.tokenAddress ? `https://dd.dexscreener.com/ds-data/tokens/solana/${item.tokenAddress}.png` : null);
+
+                return {
+                    address: item.tokenAddress,
+                    name: item.description || item.tokenAddress?.slice(0, 8) || 'New Token',
+                    symbol: '🆕',
+                    icon: iconUrl,
+                    url: item.url,
+                    score: this.calculateQuickScore(item)
+                };
+            });
 
             this.render();
         } catch (error) {
             console.error('Fresh pairs fetch error:', error);
-            // Try fallback to profiles endpoint
+            // Try fallback to boosted tokens endpoint
             await this.fetchFallbackPairs();
         } finally {
             this.isLoading = false;
@@ -75,27 +79,44 @@ export class FreshPairsManager {
     }
 
     /**
-     * Fallback fetch using token profiles
+     * Shuffle array using Fisher-Yates algorithm
+     */
+    shuffleArray(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    }
+
+    /**
+     * Fallback fetch using boosted tokens (different source)
      */
     async fetchFallbackPairs() {
         try {
-            const response = await fetch(`${CONFIG.API.DEXSCREENER_BASE}/token-profiles/latest/v1`);
+            const response = await fetch(`${CONFIG.API.DEXSCREENER_BASE}/token-boosts/top/v1`);
 
             if (!response.ok) return;
 
             const data = await response.json();
 
-            this.pairs = (data || [])
-                .filter(item => item.chainId === 'solana')
-                .slice(0, 15)
-                .map(item => ({
+            let solanaPairs = (data || []).filter(item => item.chainId === 'solana');
+            solanaPairs = this.shuffleArray(solanaPairs);
+
+            this.pairs = solanaPairs.slice(0, 15).map(item => {
+                const iconUrl = item.icon ||
+                    (item.tokenAddress ? `https://dd.dexscreener.com/ds-data/tokens/solana/${item.tokenAddress}.png` : null);
+
+                return {
                     address: item.tokenAddress,
-                    name: item.description?.slice(0, 20) || 'New Token',
-                    symbol: '🆕',
-                    icon: item.icon,
+                    name: item.description?.slice(0, 20) || 'Trending Token',
+                    symbol: item.symbol || '🔥',
+                    icon: iconUrl,
                     url: item.url,
-                    score: Math.floor(Math.random() * 30 + 40) // Placeholder score
-                }));
+                    score: this.calculateQuickScore(item)
+                };
+            });
 
             this.render();
         } catch (error) {

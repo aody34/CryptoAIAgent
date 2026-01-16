@@ -86,13 +86,18 @@ export class TrendingManager {
             this.tokens = (data || [])
                 .filter(item => item.chainId === 'solana')
                 .slice(0, 6)
-                .map(item => ({
-                    address: item.tokenAddress,
-                    name: item.description?.slice(0, 25) || 'Trending Token',
-                    symbol: item.symbol || '🔥',
-                    icon: item.icon || null,
-                    chainId: item.chainId
-                }));
+                .map(item => {
+                    const iconUrl = item.icon ||
+                        (item.tokenAddress ? `https://dd.dexscreener.com/ds-data/tokens/solana/${item.tokenAddress}.png` : null);
+
+                    return {
+                        address: item.tokenAddress,
+                        name: item.description?.slice(0, 25) || 'Trending Token',
+                        symbol: item.symbol || '🔥',
+                        icon: iconUrl,
+                        chainId: item.chainId
+                    };
+                });
 
             this.setCachedData(this.tokens);
             this.render();
