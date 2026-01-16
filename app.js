@@ -360,9 +360,6 @@ function setupShareButton() {
 /**
  * Setup dev check button functionality
  */
-/**
- * Setup dev check button functionality
- */
 function setupDevCheckButton() {
     if (checkDevBtn) {
         checkDevBtn.addEventListener('click', async () => {
@@ -1533,4 +1530,3 @@ window.addEventListener('hashchange', () => {
 console.log('%c🤖 MemeRadar Loaded', 'color: #00ff88; font-size: 16px; font-weight: bold;');
 console.log('%cTry searching for: WIF, BONK, POPCAT, or any Solana memecoin ticker', 'color: #a0a0b0;');
 console.log('%cDeep linking enabled - share URLs with #ContractAddress', 'color: #a0a0b0;');
-
