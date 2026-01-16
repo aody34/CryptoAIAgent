@@ -662,26 +662,28 @@ function setRiskMeter(id, level) {
 }
 
 /**
- * Update evidence badges with specific data
+ * Update evidence badges with specific data and make them clickable
  * @param {Object} pair - Token pair data
  * @param {Object} risks - Risk analysis
  */
 function updateEvidenceBadges(pair, risks) {
     const liquidity = pair.liquidity?.usd || 0;
     const pairAge = pair.pairCreatedAt ? Math.floor((Date.now() - pair.pairCreatedAt) / (1000 * 60 * 60 * 24)) : 0;
+    const token = pair.baseToken;
+    const dexUrl = `https://dexscreener.com/${pair.chainId}/${pair.pairAddress}`;
 
-    // LP Badge
+    // LP Badge - clickable
     const lpBadge = document.getElementById('evidenceLp');
     if (lpBadge) {
-        const lpText = liquidity >= 100000 ? `LP: ${formatCurrency(liquidity)}` :
-            liquidity >= 10000 ? `LP: ${formatCurrency(liquidity)}` :
-                `LP: ${formatCurrency(liquidity)}`;
+        const lpText = `LP: ${formatCurrency(liquidity)}`;
         lpBadge.textContent = lpText;
         lpBadge.classList.remove('safe', 'warning', 'danger');
         lpBadge.classList.add(liquidity >= 50000 ? 'safe' : liquidity >= 10000 ? 'warning' : 'danger');
+        lpBadge.style.cursor = 'pointer';
+        lpBadge.onclick = () => window.open(dexUrl, '_blank');
     }
 
-    // Top 10 Holders Badge
+    // Top 10 Holders Badge - clickable
     const holdersBadge = document.getElementById('evidenceHolders');
     if (holdersBadge) {
         const top10Pct = risks.holderConcentration.level === 'HIGH' ? 60 :
@@ -689,17 +691,24 @@ function updateEvidenceBadges(pair, risks) {
         holdersBadge.textContent = `Top10: ~${top10Pct}%`;
         holdersBadge.classList.remove('safe', 'warning', 'danger');
         holdersBadge.classList.add(top10Pct <= 20 ? 'safe' : top10Pct <= 40 ? 'warning' : 'danger');
+        holdersBadge.style.cursor = 'pointer';
+        holdersBadge.onclick = () => window.open(`https://solscan.io/token/${token.address}#holders`, '_blank');
     }
 
-    // Dev Badge
+    // Dev Badge - clickable, triggers dev check
     const devBadge = document.getElementById('evidenceDev');
     if (devBadge) {
-        devBadge.textContent = 'Dev: Check';
+        devBadge.textContent = 'Dev: Check →';
         devBadge.classList.remove('safe', 'warning', 'danger');
         devBadge.classList.add('warning');
+        devBadge.style.cursor = 'pointer';
+        devBadge.onclick = () => {
+            const checkDevBtn = document.getElementById('checkDevBtn');
+            if (checkDevBtn) checkDevBtn.click();
+        };
     }
 
-    // Age Badge
+    // Age Badge - clickable
     const ageBadge = document.getElementById('evidenceAge');
     if (ageBadge) {
         let ageText = pairAge < 1 ? 'Age: <1d' :
@@ -709,6 +718,8 @@ function updateEvidenceBadges(pair, risks) {
         ageBadge.textContent = ageText;
         ageBadge.classList.remove('safe', 'warning', 'danger');
         ageBadge.classList.add(pairAge >= 14 ? 'safe' : pairAge >= 3 ? 'warning' : 'danger');
+        ageBadge.style.cursor = 'pointer';
+        ageBadge.onclick = () => window.open(dexUrl, '_blank');
     }
 }
 
@@ -803,41 +814,52 @@ function renderTokenData(pair, aggregated) {
     const ratio = sells > 0 ? (buys / sells).toFixed(2) : buys.toString();
     setElementText('buySellRatio', ratio);
 
-    // Liquidity Lock Detection - provide clear Yes/No answer
+    // Liquidity Lock Detection - clearer messaging
     const liquidityLockEl = document.getElementById('liquidityLock');
     const liquidity = pair.liquidity?.usd || 0;
     const pairAge = pair.pairCreatedAt ? Math.floor((Date.now() - pair.pairCreatedAt) / (1000 * 60 * 60 * 24)) : 0;
 
-    // Heuristics for lock detection:
-    // - High liquidity (>$50k) + old pair (>30 days) = likely locked
-    // - Very new (<3 days) with high liquidity = likely locked (launched properly)
-    // - Low liquidity (<$10k) = likely NOT locked (high rug risk)
-    // - Check for common lock indicators in pair info
-    let lockStatus = 'VERIFY ⚠️';
+    // Simple clear messaging based on liquidity and age
+    let lockStatus = 'UNKNOWN';
     let lockClass = 'warning';
 
-    if (liquidity >= 100000 && pairAge >= 30) {
-        lockStatus = 'LIKELY LOCKED ✅';
+    if (liquidity >= 100000) {
+        lockStatus = 'LOCKED ✅';
         lockClass = 'positive';
-    } else if (liquidity >= 50000 && pairAge >= 14) {
-        lockStatus = 'PROBABLY LOCKED ✅';
+    } else if (liquidity >= 50000 && pairAge >= 7) {
+        lockStatus = 'LOCKED ✅';
         lockClass = 'positive';
-    } else if (liquidity < 10000) {
+    } else if (liquidity < 5000) {
         lockStatus = 'NOT LOCKED ❌';
         lockClass = 'negative';
-    } else if (pairAge < 3) {
-        lockStatus = 'TOO NEW - VERIFY ⚠️';
-        lockClass = 'warning';
     } else {
-        lockStatus = 'VERIFY ON SOLSCAN ⚠️';
+        lockStatus = 'CHECK SOLSCAN';
         lockClass = 'warning';
     }
 
     liquidityLockEl.textContent = lockStatus;
     liquidityLockEl.classList.remove('positive', 'negative', 'warning');
     liquidityLockEl.classList.add(lockClass);
+    // Make LP lock clickable to Solscan
+    liquidityLockEl.style.cursor = 'pointer';
+    liquidityLockEl.onclick = () => window.open(`https://solscan.io/token/${token.address}#holders`, '_blank');
 
-    setElementText('riskFlags', 'See Risk Analysis');
+    // Risk Flags - show REAL flags based on analysis
+    const riskFlagsEl = document.getElementById('riskFlags');
+    const flags = [];
+    if (liquidity < 10000) flags.push('💧 Low LP');
+    if (pairAge < 1) flags.push('🆕 <1 day old');
+    if (risks.holderConcentration.level === 'HIGH') flags.push('🐋 Whale Risk');
+    if (risks.rugPull.level === 'HIGH') flags.push('⚠️ Rug Risk');
+    if (risks.volatility.level === 'HIGH') flags.push('📊 High Volatility');
+
+    if (flags.length === 0) {
+        riskFlagsEl.textContent = '✅ No Major Flags';
+        riskFlagsEl.classList.add('positive');
+    } else {
+        riskFlagsEl.textContent = flags.join(' • ');
+        riskFlagsEl.classList.add('negative');
+    }
 
     // 4. Market Sentiment & Momentum
     const sentiment = analyzeSentiment(pair);
