@@ -565,57 +565,6 @@ function setupKeyboardShortcuts() {
 }
 
 /**
- * Update dev analysis UI with fetched data
- */
-function updateDevAnalysisUI(analysis) {
-    const devTrustEl = document.getElementById('devTrustScore');
-    const devOtherCoins = document.getElementById('devOtherCoins');
-    const devRugHistory = document.getElementById('devRugHistory');
-    const devSuccessRate = document.getElementById('devSuccessRate');
-    const deployerWallet = document.getElementById('deployerWallet');
-    const devHistoryLink = document.getElementById('devHistoryLink');
-
-    // Update badge
-    if (analysis.badge) {
-        const badgeColor = {
-            positive: '#00ff88',
-            warning: '#ffaa00',
-            negative: '#ff4444'
-        }[analysis.badgeClass] || '#ffaa00';
-
-        devTrustEl.innerHTML = `<span class="dev-badge" style="color: ${badgeColor}; border-color: ${badgeColor};">${analysis.badge}</span>`;
-    }
-
-    // Update other fields
-    if (analysis.deployerWallet) {
-        deployerWallet.textContent = truncateAddress(analysis.deployerWallet, 6);
-        if (devHistoryLink) {
-            devHistoryLink.href = analysis.solscanLink || '#';
-        }
-    }
-
-    if (analysis.otherTokens !== undefined) {
-        devOtherCoins.textContent = analysis.otherTokens;
-    }
-
-    if (analysis.rugCount !== undefined) {
-        devRugHistory.textContent = analysis.rugCount;
-        if (analysis.rugCount !== 'Unknown' && parseInt(analysis.rugCount) > 0) {
-            devRugHistory.classList.add('negative');
-        }
-    }
-
-    if (analysis.successRate !== undefined) {
-        devSuccessRate.textContent = analysis.successRate;
-    }
-
-    // Show message if available
-    if (analysis.message) {
-        showToast(analysis.message);
-    }
-}
-
-/**
  * Show toast notification
  */
 function showToast(message) {
