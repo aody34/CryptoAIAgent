@@ -721,6 +721,26 @@ function updateEvidenceBadges(pair, risks) {
         ageBadge.style.cursor = 'pointer';
         ageBadge.onclick = () => window.open(dexUrl, '_blank');
     }
+
+    // Risk Flags - show REAL flags based on analysis (risks is now available)
+    const riskFlagsEl = document.getElementById('riskFlags');
+    if (riskFlagsEl && risks) {
+        const flags = [];
+        if (liquidity < 10000) flags.push('💧 Low LP');
+        if (pairAge < 1) flags.push('🆕 <1 day old');
+        if (risks.holderConcentration?.level === 'HIGH') flags.push('🐋 Whale Risk');
+        if (risks.rugPull?.level === 'HIGH') flags.push('⚠️ Rug Risk');
+        if (risks.volatility?.level === 'HIGH') flags.push('📊 High Volatility');
+
+        riskFlagsEl.classList.remove('positive', 'negative');
+        if (flags.length === 0) {
+            riskFlagsEl.textContent = '✅ No Major Flags';
+            riskFlagsEl.classList.add('positive');
+        } else {
+            riskFlagsEl.textContent = flags.join(' • ');
+            riskFlagsEl.classList.add('negative');
+        }
+    }
 }
 
 /**
@@ -844,22 +864,7 @@ function renderTokenData(pair, aggregated) {
     liquidityLockEl.style.cursor = 'pointer';
     liquidityLockEl.onclick = () => window.open(`https://solscan.io/token/${token.address}#holders`, '_blank');
 
-    // Risk Flags - show REAL flags based on analysis
-    const riskFlagsEl = document.getElementById('riskFlags');
-    const flags = [];
-    if (liquidity < 10000) flags.push('💧 Low LP');
-    if (pairAge < 1) flags.push('🆕 <1 day old');
-    if (risks.holderConcentration.level === 'HIGH') flags.push('🐋 Whale Risk');
-    if (risks.rugPull.level === 'HIGH') flags.push('⚠️ Rug Risk');
-    if (risks.volatility.level === 'HIGH') flags.push('📊 High Volatility');
-
-    if (flags.length === 0) {
-        riskFlagsEl.textContent = '✅ No Major Flags';
-        riskFlagsEl.classList.add('positive');
-    } else {
-        riskFlagsEl.textContent = flags.join(' • ');
-        riskFlagsEl.classList.add('negative');
-    }
+    // NOTE: Risk Flags are now set in updateEvidenceBadges after risks is calculated
 
     // 4. Market Sentiment & Momentum
     const sentiment = analyzeSentiment(pair);
