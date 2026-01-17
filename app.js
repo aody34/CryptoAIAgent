@@ -1138,7 +1138,7 @@ function renderWalletAnalysis(pair, token, risks) {
     if (bubblemapsIframe) {
         // Only load for Solana tokens
         if (pair.chainId === 'solana') {
-            const iframeSrc = `https://iframe.bubblemaps.io/map?address=${token.address}&chain=solana&partnerId=memeradar`;
+            const iframeSrc = `https://iframe.bubblemaps.io/map?address=${token.address}&chain=solana&partnerId=demo`;
             bubblemapsIframe.src = iframeSrc;
             if (bubblemapsLoading) bubblemapsLoading.style.display = 'none';
         } else {
