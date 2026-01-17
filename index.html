@@ -742,6 +742,69 @@
     </section>
   </main>
 
+  <!-- Bubblemaps Modal (Like Dexscreener) -->
+  <div id="bubblemapsModal" class="bubblemaps-modal" style="display: none;">
+    <div class="bubblemaps-modal-content">
+      <!-- Header -->
+      <div class="bubblemaps-modal-header">
+        <div class="bubblemaps-modal-title">
+          <span id="modalTokenName">Token</span> Bubblemaps
+        </div>
+        <div class="bubblemaps-modal-actions">
+          <a href="#" id="modalBubblemapsLink" target="_blank" class="modal-open-btn">🔗 Open Full Map</a>
+          <button class="modal-close-btn" onclick="closeBubblemapsModal()">✕</button>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="bubblemaps-modal-body">
+        <!-- Left: Map Area -->
+        <div class="bubblemaps-map-area">
+          <iframe id="modalBubblemapsIframe" src="about:blank"
+            style="width: 100%; height: 100%; border: none;"></iframe>
+          <div id="modalMapFallback" class="map-fallback" style="display: none;">
+            <div style="font-size: 3rem;">🗺️</div>
+            <p>Bubblemaps blocked iframe embedding.</p>
+            <a href="#" id="modalFallbackLink" target="_blank" class="action-btn"
+              style="background: #00ff88; color: #000;">
+              Open in New Tab →
+            </a>
+          </div>
+          <div class="bubblemaps-powered">
+            🎨 Powered by <a href="https://bubblemaps.io" target="_blank">Bubblemaps</a>
+          </div>
+        </div>
+
+        <!-- Right: Address List -->
+        <div class="bubblemaps-address-list">
+          <div class="address-list-header">
+            <h4>Address List</h4>
+            <button class="address-refresh-btn" onclick="refreshAddressList()">🔄</button>
+          </div>
+
+          <div class="address-search">
+            <input type="text" id="holderSearch" placeholder="Search address..." oninput="filterHolders()">
+          </div>
+
+          <div class="address-filters">
+            <label><input type="checkbox" id="filterContracts" checked onchange="filterHolders()"> Contracts</label>
+            <label><input type="checkbox" id="filterCEX" checked onchange="filterHolders()"> CEX</label>
+            <label><input type="checkbox" id="filterDEX" checked onchange="filterHolders()"> DEX</label>
+          </div>
+
+          <div class="address-table-header">
+            <span>Address</span>
+            <span>Share of Supply</span>
+          </div>
+
+          <div class="address-table" id="holdersList">
+            <div class="address-loading">Loading holders...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="footer">
     <div class="container">
@@ -763,7 +826,7 @@
   </div>
 
   <!-- Main Script -->
-  <script type="module" src="app.js?v=bubblemaps3"></script>
+  <script type="module" src="app.js?v=modal1"></script>
 </body>
 
 </html>

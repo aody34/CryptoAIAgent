@@ -1140,8 +1140,205 @@ function renderWalletAnalysis(pair, token, risks) {
         } else {
             bubblemapsDirectLink.href = `https://app.bubblemaps.io/${pair.chainId}/token/${token.address}`;
         }
+        // Make the wrapper clickable to open modal
+        const wrapper = document.getElementById('bubblemapsWrapper');
+        if (wrapper) {
+            wrapper.onclick = () => openBubblemapsModal(token.address, token.symbol || token.name, pair.chainId);
+        }
     }
 }
+
+// ========== BUBBLEMAPS MODAL FUNCTIONS ==========
+
+let currentHolders = [];
+let currentTokenAddress = null;
+
+/**
+ * Open Bubblemaps Modal
+ */
+function openBubblemapsModal(tokenAddress, tokenName, chainId) {
+    currentTokenAddress = tokenAddress;
+    const modal = document.getElementById('bubblemapsModal');
+    const modalTokenName = document.getElementById('modalTokenName');
+    const modalBubblemapsLink = document.getElementById('modalBubblemapsLink');
+    const modalFallbackLink = document.getElementById('modalFallbackLink');
+    const modalIframe = document.getElementById('modalBubblemapsIframe');
+    const modalFallback = document.getElementById('modalMapFallback');
+
+    // Set token name
+    modalTokenName.textContent = tokenName || 'Token';
+
+    // Set Bubblemaps link
+    const bubblemapsUrl = chainId === 'solana'
+        ? `https://app.bubblemaps.io/sol/token/${tokenAddress}`
+        : `https://app.bubblemaps.io/${chainId}/token/${tokenAddress}`;
+    modalBubblemapsLink.href = bubblemapsUrl;
+    modalFallbackLink.href = bubblemapsUrl;
+
+    // Try to load iframe (will likely be blocked)
+    const iframeUrl = `https://iframe.bubblemaps.io/map?address=${tokenAddress}&chain=solana&partnerId=demo`;
+    modalIframe.src = iframeUrl;
+
+    // Show fallback after timeout if iframe fails
+    modalFallback.style.display = 'none';
+    setTimeout(() => {
+        // Check if iframe loaded (this is approximate)
+        try {
+            if (!modalIframe.contentWindow || !modalIframe.contentDocument) {
+                modalFallback.style.display = 'flex';
+            }
+        } catch (e) {
+            modalFallback.style.display = 'flex';
+        }
+    }, 3000);
+
+    // Fetch holders
+    fetchTokenHolders(tokenAddress);
+
+    // Show modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Close Bubblemaps Modal
+ */
+window.closeBubblemapsModal = function () {
+    const modal = document.getElementById('bubblemapsModal');
+    const modalIframe = document.getElementById('modalBubblemapsIframe');
+    modal.style.display = 'none';
+    modalIframe.src = 'about:blank';
+    document.body.style.overflow = '';
+};
+
+// Close modal on escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeBubblemapsModal();
+    }
+});
+
+// Close modal on outside click
+document.getElementById('bubblemapsModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'bubblemapsModal') {
+        closeBubblemapsModal();
+    }
+});
+
+/**
+ * Fetch Token Holders from Solscan
+ */
+async function fetchTokenHolders(tokenAddress) {
+    const holdersList = document.getElementById('holdersList');
+    holdersList.innerHTML = '<div class="address-loading">Loading holders...</div>';
+
+    try {
+        // Solscan public API for token holders
+        const response = await fetch(`https://api.solscan.io/token/holders?token=${tokenAddress}&offset=0&size=20`);
+
+        if (!response.ok) throw new Error('Failed to fetch holders');
+
+        const data = await response.json();
+
+        if (data.data && Array.isArray(data.data)) {
+            currentHolders = data.data.map((holder, index) => ({
+                rank: index + 1,
+                address: holder.address,
+                amount: holder.amount,
+                share: holder.share || 0,
+                decimals: holder.decimals || 9,
+                type: classifyAddress(holder.address)
+            }));
+            renderHoldersList();
+        } else {
+            holdersList.innerHTML = '<div class="address-loading">No holder data available</div>';
+        }
+    } catch (error) {
+        console.error('Failed to fetch holders:', error);
+        holdersList.innerHTML = '<div class="address-loading">Failed to load holders. <a href="https://solscan.io/token/' + tokenAddress + '#holders" target="_blank" style="color: var(--accent-primary);">View on Solscan</a></div>';
+    }
+}
+
+/**
+ * Classify address type (Contract, CEX, DEX, or Wallet)
+ */
+function classifyAddress(address) {
+    // Known addresses (simplified - you could expand this)
+    const cexAddresses = [
+        '5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1', // Binance
+        'HN7cABqLq46Es1jh92dQQisAq', // Coinbase
+    ];
+    const dexAddresses = [
+        '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1', // Raydium Authority
+        'srmqPvymJeFKQ4zGQed1GFpp', // Serum
+        'whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc', // Orca
+    ];
+
+    if (cexAddresses.some(a => address.startsWith(a))) return 'cex';
+    if (dexAddresses.some(a => address.startsWith(a))) return 'dex';
+    // Could add contract detection logic here
+    return 'wallet';
+}
+
+/**
+ * Render holders list
+ */
+function renderHoldersList() {
+    const holdersList = document.getElementById('holdersList');
+    const searchTerm = document.getElementById('holderSearch')?.value?.toLowerCase() || '';
+    const showContracts = document.getElementById('filterContracts')?.checked ?? true;
+    const showCEX = document.getElementById('filterCEX')?.checked ?? true;
+    const showDEX = document.getElementById('filterDEX')?.checked ?? true;
+
+    const filtered = currentHolders.filter(holder => {
+        // Search filter
+        if (searchTerm && !holder.address.toLowerCase().includes(searchTerm)) return false;
+
+        // Type filters (wallets always shown)
+        if (holder.type === 'contract' && !showContracts) return false;
+        if (holder.type === 'cex' && !showCEX) return false;
+        if (holder.type === 'dex' && !showDEX) return false;
+
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        holdersList.innerHTML = '<div class="address-loading">No holders match filters</div>';
+        return;
+    }
+
+    holdersList.innerHTML = filtered.map(holder => {
+        const shortAddr = holder.address.slice(0, 6) + '...' + holder.address.slice(-4);
+        const sharePercent = (holder.share * 100).toFixed(2);
+        const iconClass = holder.type;
+        const iconLetter = holder.type === 'cex' ? 'C' : holder.type === 'dex' ? 'D' : holder.type === 'contract' ? '📜' : '○';
+
+        return `
+            <div class="address-row" onclick="window.open('https://solscan.io/account/${holder.address}', '_blank')">
+                <span class="address-rank">#${holder.rank}</span>
+                <div class="address-icon ${iconClass}">${iconLetter}</div>
+                <div class="address-info">
+                    <div class="address-text">${shortAddr}</div>
+                </div>
+                <span class="address-share">${sharePercent}%</span>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Filter holders (called from HTML)
+ */
+window.filterHolders = renderHoldersList;
+
+/**
+ * Refresh address list
+ */
+window.refreshAddressList = function () {
+    if (currentTokenAddress) {
+        fetchTokenHolders(currentTokenAddress);
+    }
+};
 
 /**
  * Render Social Pulse (Feature 9)
