@@ -208,7 +208,58 @@ export class DevChecker {
      */
     async fetchHeliusDevHistory(creatorAddress) {
         try {
-            // Call our secure API endpoint (API key hidden on server)
+            // Check if running on localhost - if so, use direct API call for testing
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+            if (isLocalhost) {
+                console.log('Running on localhost: Using direct Helius API call');
+                const apiKey = "9b583a75-fa36-4da9-932d-db8e4e06ae35";
+                const url = `https://mainnet.helius-rpc.com/?api-key=${apiKey}`;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 'memeradar-check-local',
+                        method: 'getAssetsByCreator',
+                        params: {
+                            creatorAddress: creatorAddress,
+                            onlyVerified: false,
+                            page: 1,
+                            limit: 1000
+                        },
+                    }),
+                });
+
+                const data = await response.json();
+                const result = data.result;
+
+                if (!result) return this.fetchPumpFunFallback(creatorAddress);
+
+                // Calculate stats locally
+                let rugged = 0;
+                let successful = 0;
+                const assets = result.items || [];
+
+                assets.forEach(asset => {
+                    const hasName = asset.content?.metadata?.name;
+                    const isVerified = asset.creators?.some(c => c.verified);
+                    const burnt = asset.burnt;
+
+                    if (burnt || (!hasName && !isVerified)) rugged++;
+                    else if (isVerified || hasName) successful++;
+                });
+
+                return {
+                    total: result.total || assets.length,
+                    rugged: rugged,
+                    successful: successful,
+                    assets: assets.slice(0, 50)
+                };
+            }
+
+            // Production: Call secure API endpoint
             const response = await fetch('/api/check-dev', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -216,8 +267,7 @@ export class DevChecker {
             });
 
             if (!response.ok) {
-                console.warn('Helius API endpoint returned error');
-                // Fallback to Pump.fun API if Helius fails
+                // Fallback to Pump.fun API if endpoint fails
                 return await this.fetchPumpFunFallback(creatorAddress);
             }
 
