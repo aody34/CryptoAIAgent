@@ -1132,22 +1132,13 @@ function renderWalletAnalysis(pair, token, risks) {
     const holdersLink = document.getElementById('holdersLink');
     holdersLink.href = getExplorerHoldersLink(pair.chainId, token.address);
 
-    // Load Bubblemaps iframe with real visualization
-    const bubblemapsIframe = document.getElementById('bubblemapsIframe');
-    const bubblemapsLoading = document.getElementById('bubblemapsLoading');
-    if (bubblemapsIframe) {
-        // Only load for Solana tokens
+    // Set Bubblemaps direct link (iframe blocked by CSP, so we link out instead)
+    const bubblemapsDirectLink = document.getElementById('bubblemapsDirectLink');
+    if (bubblemapsDirectLink) {
         if (pair.chainId === 'solana') {
-            const iframeSrc = `https://iframe.bubblemaps.io/map?address=${token.address}&chain=solana&partnerId=demo`;
-            bubblemapsIframe.src = iframeSrc;
-            if (bubblemapsLoading) bubblemapsLoading.style.display = 'none';
+            bubblemapsDirectLink.href = `https://app.bubblemaps.io/sol/token/${token.address}`;
         } else {
-            // Not supported chain - show message
-            bubblemapsIframe.src = 'about:blank';
-            if (bubblemapsLoading) {
-                bubblemapsLoading.style.display = 'block';
-                bubblemapsLoading.textContent = `Bubblemaps not available for ${pair.chainId}`;
-            }
+            bubblemapsDirectLink.href = `https://app.bubblemaps.io/${pair.chainId}/token/${token.address}`;
         }
     }
 }
