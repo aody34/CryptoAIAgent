@@ -357,66 +357,7 @@ function setupShareButton() {
     }
 }
 
-/**
- * Setup dev check button functionality
- */
-function setupDevCheckButton() {
-    if (checkDevBtn) {
-        checkDevBtn.addEventListener('click', async () => {
-            if (!currentTokenData) return;
 
-            checkDevBtn.disabled = true;
-            checkDevBtn.innerHTML = '⏳ Checking...';
-
-            try {
-                // Pass token address, chain, and pair data for analysis
-                const analysis = await devChecker.analyzeDevWallet(
-                    currentTokenData.pair.baseToken.address,
-                    currentTokenData.pair.chainId,
-                    currentTokenData.pair
-                );
-
-                updateDevAnalysisUI(analysis);
-            } catch (error) {
-                console.error('Dev check error:', error);
-            } finally {
-                checkDevBtn.disabled = false;
-                checkDevBtn.innerHTML = '🔍 Check Dev';
-            }
-        });
-    }
-}
-
-/**
- * Update the Dev Analysis UI with results
- * @param {Object} analysis - Dev analysis results
- */
-function updateDevAnalysisUI(analysis) {
-    if (!analysis) return;
-
-    // Update Trust Score Badge
-    const devTrustEl = document.getElementById('devTrustScore');
-    if (devTrustEl) {
-        devTrustEl.innerHTML = devChecker.getBadgeHTML(analysis);
-    }
-
-    // Update numerical metrics
-    setElementText('devOtherCoins', analysis.otherTokens);
-    setElementText('devRugHistory', analysis.rugCount);
-    setElementText('devSuccessRate', analysis.successRate); // Now shows Trust Score %
-
-    // Update message/tooltip if possible (or just log it)
-    console.log('[Dev Check]', analysis.message);
-
-    // Update deployer wallet link if known
-    if (analysis.deployerWallet && analysis.deployerWallet !== 'Unknown') {
-        const walletEl = document.getElementById('deployerWallet');
-        if (walletEl) {
-            walletEl.textContent = analysis.deployerWallet.slice(0, 4) + '...' + analysis.deployerWallet.slice(-4);
-            walletEl.title = analysis.deployerWallet;
-        }
-    }
-}
 
 /**
  * Update loading progress bar
