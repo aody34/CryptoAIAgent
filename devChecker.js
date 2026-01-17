@@ -124,13 +124,13 @@ export class DevChecker {
         //    } catch (e) { ... }
         // }
 
-        // 2. Pump.fun History Check
-        let pumpStats = { total: 0, rugged: 0, successful: 0 };
+        // 2. Helius Dev History Check (via secure API endpoint)
+        let devStats = { total: 0, rugged: 0, successful: 0 };
         if (creatorAddress) {
             try {
-                pumpStats = await this.fetchPumpFunHistory(creatorAddress);
+                devStats = await this.fetchHeliusDevHistory(creatorAddress);
             } catch (e) {
-                console.warn('Pump.fun fetch failed:', e);
+                console.warn('Dev history fetch failed:', e);
             }
         }
 
@@ -162,10 +162,10 @@ export class DevChecker {
             score += 20;
         }
 
-        // Adjust score based on Pump.fun history
-        if (pumpStats.total > 0) {
-            if (pumpStats.rugged > 0) score -= (pumpStats.rugged * 10); // Penalty for rugs
-            if (pumpStats.successful > 0) score += (pumpStats.successful * 5); // Bonus for success
+        // Adjust score based on Dev history (Helius)
+        if (devStats.total > 0) {
+            if (devStats.rugged > 0) score -= (devStats.rugged * 10); // Penalty for rugs
+            if (devStats.successful > 0) score += (devStats.successful * 5); // Bonus for success
         }
 
         // Normalize Score (0-100)
@@ -187,27 +187,61 @@ export class DevChecker {
             badgeClass = 'negative';
         }
 
-        const successRate = pumpStats.total > 0
-            ? Math.round((pumpStats.successful / pumpStats.total) * 100) + '%'
+        const successRate = devStats.total > 0
+            ? Math.round((devStats.successful / devStats.total) * 100) + '%'
             : 'N/A';
 
         return {
             badge,
             badgeClass,
             message: `Trust Score: ${finalScore}/100`,
-            otherTokens: pumpStats.total > 0 ? `${pumpStats.total} Coins` : '0 Found (Pump.fun)',
-            rugCount: pumpStats.rugged > 0 ? `${pumpStats.rugged} Rugs ⚠️` : '0 Rugs ✅',
-            successRate: successRate
+            otherTokens: devStats.total > 0 ? `${devStats.total} Coins` : '0 Found',
+            rugCount: devStats.rugged > 0 ? `${devStats.rugged} Rugs ⚠️` : '0 Rugs ✅',
+            successRate: successRate,
+            rawAssets: devStats.assets // Pass raw assets for potential display
         };
     }
 
     /**
-     * Fetch Creator History from Pump.fun (Hidden API)
+     * Fetch Creator History from Helius API (via secure serverless function)
      * @param {string} creatorAddress 
      */
-    async fetchPumpFunHistory(creatorAddress) {
+    async fetchHeliusDevHistory(creatorAddress) {
         try {
-            // Use the public frontend API
+            // Call our secure API endpoint (API key hidden on server)
+            const response = await fetch('/api/check-dev', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ creatorAddress })
+            });
+
+            if (!response.ok) {
+                console.warn('Helius API endpoint returned error');
+                // Fallback to Pump.fun API if Helius fails
+                return await this.fetchPumpFunFallback(creatorAddress);
+            }
+
+            const data = await response.json();
+
+            return {
+                total: data.totalCreated || 0,
+                rugged: data.rugged || 0,
+                successful: data.successful || 0,
+                assets: data.assets || []
+            };
+        } catch (e) {
+            console.error('Helius API error:', e);
+            // Fallback to Pump.fun API
+            return await this.fetchPumpFunFallback(creatorAddress);
+        }
+    }
+
+    /**
+     * Fallback to Pump.fun API if Helius fails
+     * @param {string} creatorAddress 
+     */
+    async fetchPumpFunFallback(creatorAddress) {
+        try {
             const response = await fetch(`https://frontend-api.pump.fun/coins/user-created-coins/${creatorAddress}?offset=0&limit=50&include_nsfw=false`);
 
             if (!response.ok) return { total: 0, rugged: 0, successful: 0 };
@@ -220,11 +254,9 @@ export class DevChecker {
             let successful = 0;
 
             coins.forEach(coin => {
-                // Criteria for "Rugged": Market Cap < $500 AND not completed
                 if (!coin.complete && coin.market_cap < 500) {
                     rugged++;
                 }
-                // Criteria for "Successful": Raydium bonded (complete) OR > $50k MC
                 if (coin.complete || coin.market_cap > 50000) {
                     successful++;
                 }
@@ -236,7 +268,7 @@ export class DevChecker {
                 successful: successful
             };
         } catch (e) {
-            console.error('Pump.fun API error:', e);
+            console.error('Pump.fun fallback error:', e);
             return { total: 0, rugged: 0, successful: 0 };
         }
     }
