@@ -527,6 +527,63 @@ function setupCopyAddressButton() {
 }
 
 /**
+ * Setup dev check button functionality
+ */
+function setupDevCheckButton() {
+    if (checkDevBtn) {
+        checkDevBtn.addEventListener('click', async () => {
+            if (!currentTokenData || !currentTokenData.pair) return;
+
+            checkDevBtn.disabled = true;
+            checkDevBtn.innerHTML = '🔄 Scanning...';
+
+            try {
+                const pair = currentTokenData.pair;
+                // Calls Helius API via devChecker (which uses our secure endpoint or local direct)
+                const analysis = await devChecker.analyzeDevWallet(
+                    pair.baseToken.address,
+                    pair.chainId,
+                    currentTokenData.aggregated
+                );
+
+                // Update Developer Analysis UI
+                const devTrustEl = document.getElementById('devTrustScore');
+                if (devTrustEl) {
+                    devTrustEl.innerHTML = devChecker.getBadgeHTML(analysis);
+                }
+
+                // Update numerical metrics with REAL data
+                setElementText('devOtherCoins', analysis.otherTokens);
+                setElementText('devRugHistory', analysis.rugCount);
+                setElementText('devSuccessRate', analysis.successRate);
+
+                // Update deployer wallet address text
+                if (analysis.deployerWallet && analysis.deployerWallet !== 'Unknown') {
+                    setElementText('deployerWallet', analysis.deployerWallet);
+                } else if (analysis.deployerWallet === 'Unknown') {
+                    setElementText('deployerWallet', 'Hidden/Unknown');
+                }
+
+                // Update links
+                const devHistoryLink = document.getElementById('devHistoryLink');
+                if (devHistoryLink && analysis.solscanLink) {
+                    devHistoryLink.href = analysis.solscanLink;
+                }
+
+                showToast(analysis.message);
+
+            } catch (error) {
+                console.error('Dev check failed:', error);
+                showToast('❌ Dev check failed. Try again.');
+            } finally {
+                checkDevBtn.disabled = false;
+                checkDevBtn.innerHTML = '🔍 Check Dev';
+            }
+        });
+    }
+}
+
+/**
  * Setup keyboard shortcuts for pro terminal feel
  */
 function setupKeyboardShortcuts() {

@@ -222,12 +222,14 @@ export class DevChecker {
                     body: JSON.stringify({
                         jsonrpc: '2.0',
                         id: 'memeradar-check-local',
-                        method: 'getAssetsByCreator',
+                        method: 'searchAssets',
                         params: {
+                            ownerAddress: creatorAddress,
                             creatorAddress: creatorAddress,
-                            onlyVerified: false,
+                            burnt: false,
                             page: 1,
-                            limit: 1000
+                            limit: 1000,
+                            sortBy: { sortBy: "created", sortDirection: "desc" }
                         },
                     }),
                 });

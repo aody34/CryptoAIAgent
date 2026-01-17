@@ -32,12 +32,14 @@ export default async function handler(req, res) {
             body: JSON.stringify({
                 jsonrpc: '2.0',
                 id: 'memeradar-check',
-                method: 'getAssetsByCreator',
+                method: 'searchAssets',
                 params: {
+                    ownerAddress: creatorAddress,
                     creatorAddress: creatorAddress,
-                    onlyVerified: false, // Get ALL tokens including unverified Pump.fun tokens
+                    burnt: false,
                     page: 1,
-                    limit: 1000
+                    limit: 1000,
+                    sortBy: { sortBy: "created", sortDirection: "desc" }
                 },
             }),
         });
