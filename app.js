@@ -468,7 +468,7 @@ function setupCopyAddressButton() {
 }
 
 /**
- * Setup dev check button functionality
+ * Setup dev check button functionality - COMPREHENSIVE VERSION
  */
 function setupDevCheckButton() {
     if (checkDevBtn) {
@@ -476,33 +476,138 @@ function setupDevCheckButton() {
             if (!currentTokenData || !currentTokenData.pair) return;
 
             checkDevBtn.disabled = true;
-            checkDevBtn.innerHTML = '🔄 Scanning...';
+            checkDevBtn.innerHTML = '🔄 Scanning Blockchain...';
 
             try {
                 const pair = currentTokenData.pair;
-                // Calls Helius API via devChecker (which uses our secure endpoint or local direct)
+                // Calls comprehensive API via devChecker
                 const analysis = await devChecker.analyzeDevWallet(
                     pair.baseToken.address,
                     pair.chainId,
                     currentTokenData.aggregated
                 );
 
-                // Update Developer Analysis UI
+                // ========== MAIN DEV INFO ==========
+                // Update Trust Badge
                 const devTrustEl = document.getElementById('devTrustScore');
                 if (devTrustEl) {
                     devTrustEl.innerHTML = devChecker.getBadgeHTML(analysis);
                 }
 
-                // Update numerical metrics with REAL data
+                // Deployer Wallet (shortened with link)
+                const deployerEl = document.getElementById('deployerWallet');
+                if (deployerEl && analysis.deployerWallet && analysis.deployerWallet !== 'Unknown') {
+                    const addr = analysis.deployerWallet;
+                    deployerEl.innerHTML = `<a href="https://solscan.io/account/${addr}" target="_blank" style="color: var(--accent-primary);">${addr.slice(0, 4)}...${addr.slice(-4)}</a>`;
+                } else if (deployerEl) {
+                    deployerEl.textContent = analysis.deployerWallet || 'Not Found';
+                }
+
+                // Wallet Age
+                const walletAgeEl = document.getElementById('devWalletAge');
+                if (walletAgeEl) {
+                    walletAgeEl.textContent = analysis.walletAge || 'Unknown';
+                    walletAgeEl.classList.remove('positive', 'negative', 'warning');
+                    if (analysis.walletAge && analysis.walletAge.includes('hour')) {
+                        walletAgeEl.classList.add('negative');
+                    } else if (analysis.walletAge && analysis.walletAge.includes('day')) {
+                        const days = parseInt(analysis.walletAge) || 0;
+                        walletAgeEl.classList.add(days < 7 ? 'warning' : 'positive');
+                    }
+                }
+
+                // Trust Score Number
+                const trustScoreNumEl = document.getElementById('devTrustScoreNum');
+                if (trustScoreNumEl) {
+                    trustScoreNumEl.textContent = `${analysis.trustScore || 0}/100`;
+                    trustScoreNumEl.classList.remove('positive', 'negative', 'warning');
+                    if (analysis.trustScore >= 70) {
+                        trustScoreNumEl.classList.add('positive');
+                    } else if (analysis.trustScore < 40) {
+                        trustScoreNumEl.classList.add('negative');
+                    } else {
+                        trustScoreNumEl.classList.add('warning');
+                    }
+                }
+
+                // ========== SECURITY FLAGS ==========
+                // Mint Authority
+                const mintAuthEl = document.getElementById('devMintAuthority');
+                if (mintAuthEl) {
+                    if (analysis.mintAuthorityEnabled === true) {
+                        mintAuthEl.textContent = '🚨 ENABLED';
+                        mintAuthEl.classList.add('negative');
+                    } else if (analysis.mintAuthorityEnabled === false) {
+                        mintAuthEl.textContent = '✅ Disabled';
+                        mintAuthEl.classList.add('positive');
+                    } else {
+                        mintAuthEl.textContent = 'Unknown';
+                    }
+                }
+
+                // Freeze Authority
+                const freezeAuthEl = document.getElementById('devFreezeAuthority');
+                if (freezeAuthEl) {
+                    if (analysis.freezeAuthorityEnabled === true) {
+                        freezeAuthEl.textContent = '🚨 ENABLED';
+                        freezeAuthEl.classList.add('negative');
+                    } else if (analysis.freezeAuthorityEnabled === false) {
+                        freezeAuthEl.textContent = '✅ Disabled';
+                        freezeAuthEl.classList.add('positive');
+                    } else {
+                        freezeAuthEl.textContent = 'Unknown';
+                    }
+                }
+
+                // Top 10 Holders
+                const top10El = document.getElementById('devTop10Holders');
+                if (top10El) {
+                    const pct = analysis.top10HolderPercent || 0;
+                    top10El.textContent = `${pct}%`;
+                    top10El.classList.remove('positive', 'negative', 'warning');
+                    if (pct > 50) {
+                        top10El.classList.add('negative');
+                    } else if (pct > 30) {
+                        top10El.classList.add('warning');
+                    } else {
+                        top10El.classList.add('positive');
+                    }
+                }
+
+                // Social Links
+                const socialEl = document.getElementById('devSocialLinks');
+                if (socialEl) {
+                    if (analysis.hasSocialLinks === true) {
+                        socialEl.textContent = '✅ Found';
+                        socialEl.classList.add('positive');
+                    } else if (analysis.hasSocialLinks === false) {
+                        socialEl.textContent = '❌ None';
+                        socialEl.classList.add('negative');
+                    } else {
+                        socialEl.textContent = 'Unknown';
+                    }
+                }
+
+                // Risk Flags List
+                const riskFlagsListEl = document.getElementById('riskFlagsList');
+                const riskFlagsContentEl = document.getElementById('riskFlagsContent');
+                if (riskFlagsListEl && riskFlagsContentEl && analysis.riskFlags && analysis.riskFlags.length > 0) {
+                    riskFlagsListEl.style.display = 'block';
+                    riskFlagsContentEl.innerHTML = analysis.riskFlags.map(flag => `<div style="margin-bottom: 0.25rem;">• ${flag}</div>`).join('');
+                } else if (riskFlagsListEl) {
+                    riskFlagsListEl.style.display = 'none';
+                }
+
+                // ========== DEV COIN HISTORY ==========
                 setElementText('devOtherCoins', analysis.otherTokens);
                 setElementText('devRugHistory', analysis.rugCount);
+                setElementText('devSuccessRate', analysis.successRate);
 
-                // NEW: Update Avg Peak Market Cap
+                // Avg Peak Market Cap with color
                 const avgPeakEl = document.getElementById('devAvgPeakMcap');
                 if (avgPeakEl) {
                     avgPeakEl.textContent = analysis.avgPeakMarketCap || 'N/A';
                     avgPeakEl.classList.remove('positive', 'negative', 'warning');
-                    // Color based on value
                     const peakValue = parseInt(String(analysis.avgPeakMarketCap).replace(/[$,]/g, '')) || 0;
                     if (peakValue >= 100000) {
                         avgPeakEl.classList.add('positive');
@@ -513,35 +618,13 @@ function setupDevCheckButton() {
                     }
                 }
 
-                // NEW: Update Risk Level with styling
-                const riskLevelEl = document.getElementById('devRiskLevel');
-                if (riskLevelEl) {
-                    const riskLevel = analysis.riskLevel || 'UNKNOWN';
-                    riskLevelEl.textContent = riskLevel;
-                    riskLevelEl.classList.remove('positive', 'negative', 'warning');
-                    if (riskLevel === 'LOW') {
-                        riskLevelEl.classList.add('positive');
-                    } else if (riskLevel === 'HIGH') {
-                        riskLevelEl.classList.add('negative');
-                    } else {
-                        riskLevelEl.classList.add('warning');
-                    }
-                }
-
-                // Update deployer wallet address text
-                if (analysis.deployerWallet && analysis.deployerWallet !== 'Unknown') {
-                    setElementText('deployerWallet', analysis.deployerWallet);
-                } else if (analysis.deployerWallet === 'Unknown') {
-                    setElementText('deployerWallet', 'Hidden/Unknown');
-                }
-
-                // Update links
+                // ========== UPDATE LINKS ==========
                 const devHistoryLink = document.getElementById('devHistoryLink');
                 if (devHistoryLink && analysis.solscanLink) {
                     devHistoryLink.href = analysis.solscanLink;
                 }
 
-                showToast(analysis.message);
+                showToast(`Trust Score: ${analysis.trustScore}/100 - ${analysis.riskLevel}`);
 
             } catch (error) {
                 console.error('Dev check failed:', error);

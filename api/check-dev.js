@@ -1,5 +1,6 @@
 // Vercel Serverless Function: /api/check-dev.js
-// Enhanced Dev History: Cross-references Helius data with Dexscreener for real market cap analysis
+// Complete Dev Analysis Automation - "Hard Truth" Implementation
+// Auto-extracts deployer, checks authorities, calculates weighted trust score
 
 export default async function handler(req, res) {
     // Enable CORS
@@ -15,163 +16,328 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { creatorAddress } = req.body;
+    const { mintAddress, creatorAddress } = req.body;
 
-    if (!creatorAddress) {
-        return res.status(400).json({ error: 'Missing creatorAddress' });
+    if (!mintAddress && !creatorAddress) {
+        return res.status(400).json({ error: 'Missing mintAddress or creatorAddress' });
     }
 
-    // Helius API Key (stored securely on server)
     const apiKey = "9b583a75-fa36-4da9-932d-db8e4e06ae35";
-    const heliusUrl = `https://mainnet.helius-rpc.com/?api-key=${apiKey}`;
+    const heliusRpc = `https://mainnet.helius-rpc.com/?api-key=${apiKey}`;
+    const heliusApi = `https://api.helius.xyz/v0`;
 
     try {
-        // Step 1: Fetch all tokens created by this wallet from Helius
-        const heliusResponse = await fetch(heliusUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 'memeradar-check',
-                method: 'searchAssets',
-                params: {
-                    ownerAddress: creatorAddress,
-                    creatorAddress: creatorAddress,
-                    burnt: false,
-                    page: 1,
-                    limit: 100,
-                    sortBy: { sortBy: "created", sortDirection: "desc" }
-                },
-            }),
-        });
+        let deployerWallet = creatorAddress;
+        let walletAge = null;
+        let walletAgeText = 'Unknown';
+        let trustScore = 100;
+        let riskFlags = [];
 
-        const heliusData = await heliusResponse.json();
+        // ========== STEP 1: Find Deployer Wallet ==========
+        if (mintAddress && !deployerWallet) {
+            try {
+                // Get signatures for the mint address to find creation transaction
+                const sigsResponse = await fetch(heliusRpc, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'getSignaturesForAddress',
+                        params: [mintAddress, { limit: 1000 }]
+                    })
+                });
+                const sigsData = await sigsResponse.json();
 
-        if (heliusData.error) {
-            console.error('Helius API error:', heliusData.error);
-            return res.status(500).json({ error: 'Helius API error', details: heliusData.error });
+                if (sigsData.result && sigsData.result.length > 0) {
+                    // The last signature is the oldest (creation)
+                    const creationSig = sigsData.result[sigsData.result.length - 1].signature;
+
+                    // Fetch the transaction details using Helius parsed API
+                    const txResponse = await fetch(`${heliusApi}/transactions/?api-key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ transactions: [creationSig] })
+                    });
+                    const txData = await txResponse.json();
+
+                    if (txData && txData.length > 0) {
+                        deployerWallet = txData[0].feePayer;
+                    }
+                }
+            } catch (e) {
+                console.error('Error finding deployer:', e);
+            }
         }
 
-        const result = heliusData.result;
+        // ========== STEP 2: Check Mint/Freeze Authority ==========
+        let mintAuthorityEnabled = false;
+        let freezeAuthorityEnabled = false;
+        let tokenInfo = null;
 
-        if (!result || !result.items || result.items.length === 0) {
-            return res.status(200).json({
-                totalCreated: 0,
-                tokens: [],
-                avgPeakMarketCap: 0,
-                riskLevel: 'UNKNOWN',
-                rugged: 0,
-                successful: 0
-            });
+        if (mintAddress) {
+            try {
+                const assetResponse = await fetch(heliusRpc, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'getAsset',
+                        params: { id: mintAddress }
+                    })
+                });
+                const assetData = await assetResponse.json();
+
+                if (assetData.result) {
+                    tokenInfo = assetData.result;
+
+                    // Check authorities
+                    if (assetData.result.authorities) {
+                        mintAuthorityEnabled = assetData.result.authorities.some(
+                            a => a.scopes && a.scopes.includes('mint')
+                        );
+                        freezeAuthorityEnabled = assetData.result.authorities.some(
+                            a => a.scopes && a.scopes.includes('freeze')
+                        );
+                    }
+
+                    // Apply penalties
+                    if (mintAuthorityEnabled) {
+                        trustScore -= 50;
+                        riskFlags.push("🚨 Mint Authority Enabled (Dev can print more tokens)");
+                    }
+                    if (freezeAuthorityEnabled) {
+                        trustScore -= 50;
+                        riskFlags.push("🚨 Freeze Authority Enabled (Dev can stop you from selling)");
+                    }
+                }
+            } catch (e) {
+                console.error('Error checking asset:', e);
+            }
         }
 
-        const assets = result.items || [];
+        // ========== STEP 3: Check Holder Concentration ==========
+        let top10HolderPercent = 0;
 
-        // Step 2: Extract mint addresses and cross-reference with Dexscreener (max 10 tokens)
-        const tokenHistory = [];
-        let totalMarketCap = 0;
-        let tokensWithData = 0;
+        if (mintAddress) {
+            try {
+                const holdersResponse = await fetch(heliusRpc, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'getTokenLargestAccounts',
+                        params: [mintAddress]
+                    })
+                });
+                const holdersData = await holdersResponse.json();
+
+                if (holdersData.result && holdersData.result.value) {
+                    const top10 = holdersData.result.value.slice(0, 10);
+                    const top10Amount = top10.reduce((acc, h) => acc + parseFloat(h.uiAmount || 0), 0);
+
+                    // Get total supply from token info
+                    let totalSupply = 1000000000; // Default 1B
+                    if (tokenInfo && tokenInfo.token_info) {
+                        totalSupply = tokenInfo.token_info.supply / Math.pow(10, tokenInfo.token_info.decimals || 9);
+                    }
+
+                    top10HolderPercent = Math.round((top10Amount / totalSupply) * 100);
+
+                    if (top10HolderPercent > 30) {
+                        trustScore -= 30;
+                        riskFlags.push(`⚠️ High Concentration: Top 10 hold ${top10HolderPercent}%`);
+                    }
+                }
+            } catch (e) {
+                console.error('Error checking holders:', e);
+            }
+        }
+
+        // ========== STEP 4: Check Wallet Age ==========
+        if (deployerWallet) {
+            try {
+                const walletSigsResponse = await fetch(heliusRpc, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'getSignaturesForAddress',
+                        params: [deployerWallet, { limit: 1000 }]
+                    })
+                });
+                const walletSigsData = await walletSigsResponse.json();
+
+                if (walletSigsData.result && walletSigsData.result.length > 0) {
+                    // Last signature is the oldest
+                    const oldestSig = walletSigsData.result[walletSigsData.result.length - 1];
+                    if (oldestSig.blockTime) {
+                        walletAge = Date.now() - (oldestSig.blockTime * 1000);
+
+                        // Format age text
+                        const hours = Math.floor(walletAge / (1000 * 60 * 60));
+                        const days = Math.floor(hours / 24);
+
+                        if (days > 0) {
+                            walletAgeText = `${days} day${days > 1 ? 's' : ''} old`;
+                        } else {
+                            walletAgeText = `${hours} hour${hours !== 1 ? 's' : ''} old`;
+                        }
+
+                        // Penalty for new wallets (< 24 hours)
+                        if (hours < 24) {
+                            trustScore -= 40;
+                            riskFlags.push(`🆕 Dev wallet is only ${walletAgeText} (HIGH RISK)`);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Error checking wallet age:', e);
+            }
+        }
+
+        // ========== STEP 5: Check Dev's Past Tokens (with Dexscreener) ==========
+        let totalCreated = 0;
         let rugged = 0;
         let successful = 0;
+        let avgPeakMarketCap = 0;
+        let tokens = [];
 
-        // Process up to 10 tokens to avoid rate limiting
-        const tokensToCheck = assets.slice(0, 10);
-
-        for (const asset of tokensToCheck) {
-            const mintAddress = asset.id;
-            const tokenName = asset.content?.metadata?.name || 'Unknown';
-            const tokenSymbol = asset.content?.metadata?.symbol || '???';
-
+        if (deployerWallet) {
             try {
-                // Call Dexscreener API for this token
-                const dexResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mintAddress}`);
-                const dexData = await dexResponse.json();
-
-                if (dexData.pairs && dexData.pairs.length > 0) {
-                    // Find the pair with highest market cap (peak indicator)
-                    const bestPair = dexData.pairs.reduce((best, pair) => {
-                        const mcap = pair.marketCap || pair.fdv || 0;
-                        return mcap > (best.marketCap || best.fdv || 0) ? pair : best;
-                    }, dexData.pairs[0]);
-
-                    const marketCap = bestPair.marketCap || bestPair.fdv || 0;
-                    const liquidity = bestPair.liquidity?.usd || 0;
-                    const priceChange = bestPair.priceChange?.h24 || 0;
-
-                    tokenHistory.push({
-                        mint: mintAddress,
-                        name: bestPair.baseToken?.name || tokenName,
-                        symbol: bestPair.baseToken?.symbol || tokenSymbol,
-                        marketCap: marketCap,
-                        liquidity: liquidity,
-                        priceChange24h: priceChange,
-                        status: marketCap > 10000 ? 'ACTIVE' : 'DEAD',
-                        dexUrl: `https://dexscreener.com/solana/${mintAddress}`
-                    });
-
-                    if (marketCap > 0) {
-                        totalMarketCap += marketCap;
-                        tokensWithData++;
-                    }
-
-                    // Classification
-                    if (marketCap > 50000) {
-                        successful++;
-                    } else if (marketCap < 5000 || liquidity < 1000) {
-                        rugged++;
-                    }
-                } else {
-                    // No Dexscreener data = likely dead/rugged
-                    tokenHistory.push({
-                        mint: mintAddress,
-                        name: tokenName,
-                        symbol: tokenSymbol,
-                        marketCap: 0,
-                        liquidity: 0,
-                        priceChange24h: 0,
-                        status: 'DEAD',
-                        dexUrl: null
-                    });
-                    rugged++;
-                }
-            } catch (dexError) {
-                console.error('Dexscreener fetch error:', dexError);
-                // Still add to history but mark as unknown
-                tokenHistory.push({
-                    mint: mintAddress,
-                    name: tokenName,
-                    symbol: tokenSymbol,
-                    marketCap: 0,
-                    status: 'UNKNOWN'
+                // Use searchAssets to find tokens by this creator
+                const assetsResponse = await fetch(heliusRpc, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'searchAssets',
+                        params: {
+                            ownerAddress: deployerWallet,
+                            creatorAddress: deployerWallet,
+                            burnt: false,
+                            page: 1,
+                            limit: 50,
+                            sortBy: { sortBy: "created", sortDirection: "desc" }
+                        }
+                    })
                 });
-            }
+                const assetsData = await assetsResponse.json();
 
-            // Small delay to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 100));
+                if (assetsData.result && assetsData.result.items) {
+                    const items = assetsData.result.items;
+                    totalCreated = assetsData.result.total || items.length;
+
+                    // Cross-reference top 10 tokens with Dexscreener
+                    let totalMcap = 0;
+                    let tokensWithMcap = 0;
+
+                    for (const item of items.slice(0, 10)) {
+                        const tokenMint = item.id;
+                        const tokenName = item.content?.metadata?.name || 'Unknown';
+                        const tokenSymbol = item.content?.metadata?.symbol || '???';
+
+                        try {
+                            const dexResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenMint}`);
+                            const dexData = await dexResponse.json();
+
+                            if (dexData.pairs && dexData.pairs.length > 0) {
+                                const bestPair = dexData.pairs.reduce((best, pair) => {
+                                    const mcap = pair.marketCap || pair.fdv || 0;
+                                    return mcap > (best.marketCap || best.fdv || 0) ? pair : best;
+                                }, dexData.pairs[0]);
+
+                                const mcap = bestPair.marketCap || bestPair.fdv || 0;
+
+                                tokens.push({
+                                    mint: tokenMint,
+                                    name: bestPair.baseToken?.name || tokenName,
+                                    symbol: bestPair.baseToken?.symbol || tokenSymbol,
+                                    marketCap: mcap,
+                                    status: mcap > 10000 ? 'ACTIVE' : 'DEAD'
+                                });
+
+                                if (mcap > 0) {
+                                    totalMcap += mcap;
+                                    tokensWithMcap++;
+                                }
+
+                                if (mcap > 50000) successful++;
+                                else if (mcap < 5000) rugged++;
+                            } else {
+                                tokens.push({
+                                    mint: tokenMint,
+                                    name: tokenName,
+                                    symbol: tokenSymbol,
+                                    marketCap: 0,
+                                    status: 'DEAD'
+                                });
+                                rugged++;
+                            }
+                        } catch (e) {
+                            // Skip on error
+                        }
+
+                        // Small delay to avoid rate limiting
+                        await new Promise(r => setTimeout(r, 100));
+                    }
+
+                    avgPeakMarketCap = tokensWithMcap > 0 ? Math.round(totalMcap / tokensWithMcap) : 0;
+
+                    // Penalty for no successful coins
+                    if (totalCreated > 0 && successful === 0) {
+                        trustScore -= 20;
+                        riskFlags.push("📉 0 successful past coins (all peaked < $50k)");
+                    }
+                }
+            } catch (e) {
+                console.error('Error checking dev history:', e);
+            }
         }
 
-        // Step 3: Calculate averages and risk level
-        const avgPeakMarketCap = tokensWithData > 0 ? Math.round(totalMarketCap / tokensWithData) : 0;
+        // ========== STEP 6: Check Social Links ==========
+        let hasSocialLinks = false;
+        if (tokenInfo && tokenInfo.content?.links) {
+            const links = tokenInfo.content.links;
+            hasSocialLinks = links.twitter || links.telegram || links.website;
+        }
+
+        if (!hasSocialLinks && mintAddress) {
+            trustScore -= 10;
+            riskFlags.push("📵 No social links in metadata (Low Effort)");
+        }
+
+        // ========== FINAL: Calculate Risk Level ==========
+        trustScore = Math.max(0, Math.min(100, trustScore));
 
         let riskLevel = 'UNKNOWN';
-        if (tokensWithData > 0) {
-            if (avgPeakMarketCap >= 100000) {
-                riskLevel = 'LOW'; // Builder - avg peak > $100k
-            } else if (avgPeakMarketCap >= 10000) {
-                riskLevel = 'MEDIUM'; // Mixed history
-            } else {
-                riskLevel = 'HIGH'; // Serial rugger - avg peak < $10k
-            }
+        if (trustScore >= 70) {
+            riskLevel = 'LOW';
+        } else if (trustScore >= 40) {
+            riskLevel = 'MEDIUM';
+        } else {
+            riskLevel = 'DANGER';
         }
 
         return res.status(200).json({
-            totalCreated: result.total || assets.length,
-            tokens: tokenHistory,
-            avgPeakMarketCap: avgPeakMarketCap,
+            deployerWallet: deployerWallet || 'Unknown',
+            walletAge: walletAgeText,
+            trustScore: trustScore,
             riskLevel: riskLevel,
+            riskFlags: riskFlags,
+            mintAuthorityEnabled: mintAuthorityEnabled,
+            freezeAuthorityEnabled: freezeAuthorityEnabled,
+            top10HolderPercent: top10HolderPercent,
+            totalCreated: totalCreated,
             rugged: rugged,
             successful: successful,
-            tokensAnalyzed: tokensToCheck.length
+            avgPeakMarketCap: avgPeakMarketCap,
+            tokens: tokens,
+            hasSocialLinks: hasSocialLinks
         });
 
     } catch (error) {
@@ -179,4 +345,3 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Server error', message: error.message });
     }
 }
-

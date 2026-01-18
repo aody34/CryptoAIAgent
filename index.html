@@ -636,21 +636,50 @@
               <div class="data-grid" style="grid-template-columns: repeat(4, 1fr);">
                 <div class="data-item">
                   <div class="data-label">Deployer Wallet</div>
-                  <div class="data-value mono" id="deployerWallet" style="font-size: 0.85rem;">Data Pending ⏳</div>
+                  <div class="data-value mono" id="deployerWallet" style="font-size: 0.85rem;">Scanning... 🔄</div>
                 </div>
                 <div class="data-item">
-                  <div class="data-label">Token Age</div>
-                  <div class="data-value" id="tokenAge">Data Pending ⏳</div>
+                  <div class="data-label">Wallet Age</div>
+                  <div class="data-value" id="devWalletAge">Scanning... 🔄</div>
                 </div>
                 <div class="data-item">
-                  <div class="data-label">Pair Created</div>
-                  <div class="data-value" id="pairCreated">Data Pending ⏳</div>
+                  <div class="data-label">Trust Score</div>
+                  <div class="data-value" id="devTrustScoreNum">Scanning... 🔄</div>
                 </div>
                 <div class="data-item">
-                  <div class="data-label">Dev Trust Score</div>
+                  <div class="data-label">Risk Level</div>
                   <div class="data-value" id="devTrustScore">
                     <span class="dev-badge-container"></span>
                   </div>
+                </div>
+              </div>
+
+              <!-- Security Flags Section -->
+              <div
+                style="margin-top: 1.5rem; padding: 1rem; background: rgba(255,68,68,0.1); border-radius: var(--radius-md); border: 1px solid rgba(255,68,68,0.3);">
+                <div class="data-label" style="margin-bottom: 0.75rem;">🛡️ Security Flags</div>
+                <div class="data-grid" style="grid-template-columns: repeat(4, 1fr);">
+                  <div class="data-item">
+                    <div class="data-label">Mint Authority</div>
+                    <div class="data-value" id="devMintAuthority">Scanning... 🔄</div>
+                  </div>
+                  <div class="data-item">
+                    <div class="data-label">Freeze Authority</div>
+                    <div class="data-value" id="devFreezeAuthority">Scanning... 🔄</div>
+                  </div>
+                  <div class="data-item">
+                    <div class="data-label">Top 10 Holders</div>
+                    <div class="data-value" id="devTop10Holders">Scanning... 🔄</div>
+                  </div>
+                  <div class="data-item">
+                    <div class="data-label">Social Links</div>
+                    <div class="data-value" id="devSocialLinks">Scanning... 🔄</div>
+                  </div>
+                </div>
+                <!-- Risk Flags List -->
+                <div id="riskFlagsList" style="margin-top: 0.75rem; display: none;">
+                  <div class="data-label" style="margin-bottom: 0.5rem;">⚠️ Detected Risks:</div>
+                  <div id="riskFlagsContent" style="font-size: 0.8rem; color: var(--danger);"></div>
                 </div>
               </div>
 
@@ -661,23 +690,23 @@
                 <div class="data-grid" style="grid-template-columns: repeat(4, 1fr);">
                   <div class="data-item">
                     <div class="data-label">Other Coins Launched</div>
-                    <div class="data-value warning" id="devOtherCoins">Data Pending ⏳</div>
+                    <div class="data-value warning" id="devOtherCoins">Scanning... 🔄</div>
                   </div>
                   <div class="data-item">
                     <div class="data-label">Rug History</div>
-                    <div class="data-value" id="devRugHistory">Data Pending ⏳</div>
+                    <div class="data-value" id="devRugHistory">Scanning... 🔄</div>
                   </div>
                   <div class="data-item">
                     <div class="data-label">Avg Peak MCap</div>
-                    <div class="data-value" id="devAvgPeakMcap">Data Pending ⏳</div>
+                    <div class="data-value" id="devAvgPeakMcap">Scanning... 🔄</div>
                   </div>
                   <div class="data-item">
-                    <div class="data-label">Dev Risk Level</div>
-                    <div class="data-value" id="devRiskLevel">Data Pending ⏳</div>
+                    <div class="data-label">Success Rate</div>
+                    <div class="data-value" id="devSuccessRate">Scanning... 🔄</div>
                   </div>
                 </div>
                 <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
-                  ⚠️ Click "Check Dev" to fetch live data + market cap history from Dexscreener.
+                  🔍 Click "Check Dev" to auto-scan blockchain for full analysis.
                 </p>
               </div>
 
@@ -830,7 +859,7 @@
   </div>
 
   <!-- Main Script -->
-  <script type="module" src="app.js?v=devhistory1"></script>
+  <script type="module" src="app.js?v=hardtruth1"></script>
 </body>
 
 </html>

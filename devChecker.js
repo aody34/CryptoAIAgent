@@ -1,14 +1,13 @@
 // ===========================================
 // MEMERADAR - DEV CHECKER MODULE
-// Automated Developer Trust Score via Solscan & On-Chain Metrics
+// Complete Dev Analysis with Automated Trust Score
 // ===========================================
-
-// import { solanaRPC } from './rpc.js';
 
 /**
  * DevChecker - Handles developer wallet analysis
+ * Now uses comprehensive server-side API for all checks
  */
-export class DevChecker {
+class DevChecker {
     constructor() {
         this.cacheKey = 'memeradar_dev_cache';
         this.cacheTTL = 10 * 60 * 1000; // 10 minutes
@@ -20,16 +19,18 @@ export class DevChecker {
      */
     getCachedDevData(address) {
         try {
-            const cache = JSON.parse(localStorage.getItem(this.cacheKey) || '{}');
-            const entry = cache[address];
-            if (!entry) return null;
-            if (Date.now() - entry.timestamp > this.cacheTTL) {
-                delete cache[address];
-                localStorage.setItem(this.cacheKey, JSON.stringify(cache));
+            const cacheKey = `${this.cacheKey}_${address}`;
+            const cached = localStorage.getItem(cacheKey);
+            if (!cached) return null;
+
+            const { data, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp > this.cacheTTL) {
+                localStorage.removeItem(cacheKey);
                 return null;
             }
-            return entry.data;
-        } catch {
+
+            return data;
+        } catch (e) {
             return null;
         }
     }
@@ -41,17 +42,19 @@ export class DevChecker {
      */
     setCachedDevData(address, data) {
         try {
-            const cache = JSON.parse(localStorage.getItem(this.cacheKey) || '{}');
-            cache[address] = { data, timestamp: Date.now() };
-            localStorage.setItem(this.cacheKey, JSON.stringify(cache));
+            const cacheKey = `${this.cacheKey}_${address}`;
+            localStorage.setItem(cacheKey, JSON.stringify({
+                data,
+                timestamp: Date.now()
+            }));
         } catch (e) {
-            console.warn('Dev cache write failed:', e);
+            console.log('Could not cache dev data:', e);
         }
     }
 
     /**
-     * Analyze developer wallet for a token
-     * @param {string} tokenAddress - Token contract address
+     * Analyze developer wallet for a token - MAIN ENTRY POINT
+     * @param {string} tokenAddress - Token contract address (mint)
      * @param {string} chainId - Chain identifier
      * @param {Object} pairData - Current token pair data (optional)
      * @returns {Promise<Object>} - Dev analysis result
@@ -69,22 +72,51 @@ export class DevChecker {
         }
 
         try {
-            // Fetch token info from Solscan (free public endpoint) to get creator
-            const tokenInfoUrl = `https://api.solscan.io/token/meta?token=${tokenAddress}`;
-            const response = await fetch(tokenInfoUrl);
-            const data = response.ok ? await response.json() : null;
+            // Call the comprehensive API with the mint address
+            const apiData = await this.fetchComprehensiveDevAnalysis(tokenAddress);
 
-            // Extract deployer/creator info
-            const creator = data?.data?.creator || data?.data?.mintAuthority || null;
-
-            // Calculate Trust Score based on available metrics
-            const analysis = await this.calculateTrustScore(creator, pairData);
-
+            // Build the analysis result from API response
             const result = {
                 status: 'analyzed',
-                ...analysis,
-                deployerWallet: creator || 'Unknown',
-                solscanLink: creator ? `https://solscan.io/account/${creator}` : `https://solscan.io/token/${tokenAddress}`,
+                badge: this.getBadgeFromScore(apiData.trustScore, apiData.riskLevel),
+                badgeClass: apiData.riskLevel === 'LOW' ? 'positive' :
+                    apiData.riskLevel === 'DANGER' ? 'negative' : 'warning',
+                message: `Trust Score: ${apiData.trustScore}/100`,
+
+                // Deployer info
+                deployerWallet: apiData.deployerWallet || 'Unknown',
+                walletAge: apiData.walletAge || 'Unknown',
+
+                // Trust metrics
+                trustScore: apiData.trustScore,
+                riskLevel: apiData.riskLevel,
+                riskFlags: apiData.riskFlags || [],
+
+                // Security flags
+                mintAuthorityEnabled: apiData.mintAuthorityEnabled,
+                freezeAuthorityEnabled: apiData.freezeAuthorityEnabled,
+
+                // Holder info
+                top10HolderPercent: apiData.top10HolderPercent,
+
+                // Dev history
+                otherTokens: apiData.totalCreated > 0 ? `${apiData.totalCreated} Coins` : '0 Found',
+                rugCount: apiData.rugged > 0 ? `${apiData.rugged} Rugs ⚠️` : '0 Rugs ✅',
+                successRate: apiData.totalCreated > 0
+                    ? Math.round((apiData.successful / apiData.totalCreated) * 100) + '%'
+                    : 'N/A',
+                avgPeakMarketCap: apiData.avgPeakMarketCap > 0
+                    ? `$${apiData.avgPeakMarketCap.toLocaleString()}`
+                    : 'N/A',
+                tokenHistory: apiData.tokens || [],
+
+                // Social
+                hasSocialLinks: apiData.hasSocialLinks,
+
+                // Links
+                solscanLink: apiData.deployerWallet && apiData.deployerWallet !== 'Unknown'
+                    ? `https://solscan.io/account/${apiData.deployerWallet}`
+                    : `https://solscan.io/token/${tokenAddress}`,
                 tokenLink: `https://solscan.io/token/${tokenAddress}`
             };
 
@@ -93,257 +125,159 @@ export class DevChecker {
 
         } catch (error) {
             console.error('Dev analysis error:', error);
-            // Even on error, try to return a score based on pairData if available
-            if (pairData) {
-                const analysis = await this.calculateTrustScore(null, pairData);
-                return {
-                    status: 'partial',
-                    ...analysis,
-                    deployerWallet: 'Unknown',
-                    solscanLink: `https://solscan.io/token/${tokenAddress}`
-                };
-            }
-            return this.getDefaultAnalysis("API Error");
+            return this.getDefaultAnalysis("API Error - Try Again");
         }
     }
 
     /**
-     * Calculate Trust Score and Badge
-     * @returns {Promise<Object>}
+     * Fetch comprehensive dev analysis from our secure API
+     * @param {string} mintAddress - Token mint address
      */
-    async calculateTrustScore(creatorAddress, pairData) {
-        let score = 0;
-        let checks = 0;
-        let walletBalance = 0;
+    async fetchComprehensiveDevAnalysis(mintAddress) {
+        // Check if running on localhost - use direct calls for testing
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-        // 1. Check Wallet Balance - DISABLED TEMPORARILY due to RPC crash
-        // if (creatorAddress) {
-        //    try {
-        //        walletBalance = await solanaRPC.getBalance(creatorAddress);
-        //        ...
-        //    } catch (e) { ... }
-        // }
-
-        // 2. Helius Dev History Check (via secure API endpoint)
-        let devStats = { total: 0, rugged: 0, successful: 0 };
-        if (creatorAddress) {
-            try {
-                devStats = await this.fetchHeliusDevHistory(creatorAddress);
-            } catch (e) {
-                console.warn('Dev history fetch failed:', e);
-            }
+        if (isLocalhost) {
+            console.log('Running on localhost: Using direct API calls');
+            return await this.fetchLocalDevAnalysis(mintAddress);
         }
 
-        // 3. Liquidity Health (from pairData)
-        if (pairData) {
-            const liq = pairData.liquidity?.usd || 0;
-            if (liq > 50000) score += 20;
-            else if (liq > 10000) score += 10;
-            else if (liq < 1000) score -= 20;
+        // Production: Call secure API endpoint
+        const response = await fetch('/api/check-dev', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mintAddress })
+        });
+
+        if (!response.ok) {
+            throw new Error('API request failed');
         }
 
-        // 4. Volume (Active trading)
-        if (pairData) {
-            const vol = pairData.volume?.h24 || 0;
-            if (vol > 100000) score += 20;
-            else if (vol > 10000) score += 10;
-        }
-
-        // 5. Age (Older = Better)
-        if (pairData && pairData.pairCreatedAt) {
-            const hoursOld = (Date.now() - pairData.pairCreatedAt) / (1000 * 60 * 60);
-            if (hoursOld > 72) score += 20; // > 3 days
-            else if (hoursOld > 24) score += 10;
-            else if (hoursOld < 1) score -= 10; // Brand new
-        }
-
-        // 6. Socials (If present)
-        if (pairData && (pairData.info?.socials?.length > 0)) {
-            score += 20;
-        }
-
-        // Adjust score based on Dev history (Helius + Dexscreener)
-        if (devStats.total > 0) {
-            if (devStats.rugged > 0) score -= (devStats.rugged * 10); // Penalty for rugs
-            if (devStats.successful > 0) score += (devStats.successful * 5); // Bonus for success
-        }
-
-        // NEW: Adjust score based on average peak market cap
-        if (devStats.avgPeakMarketCap) {
-            if (devStats.avgPeakMarketCap >= 100000) {
-                score += 15; // Builder - avg peak > $100k
-            } else if (devStats.avgPeakMarketCap >= 10000) {
-                score += 0; // Neutral
-            } else {
-                score -= 20; // Serial rugger - avg peak < $10k
-            }
-        }
-
-        // Normalize Score (0-100)
-        let finalScore = 40 + score;
-        finalScore = Math.min(100, Math.max(0, finalScore));
-
-        // Determine Badge (enhanced with riskLevel from API)
-        let badge = 'UNKNOWN';
-        let badgeClass = 'warning';
-
-        if (devStats.riskLevel === 'LOW' || finalScore >= 80) {
-            badge = 'TRUSTED DEV 🟢';
-            badgeClass = 'positive';
-        } else if (devStats.riskLevel === 'HIGH' || finalScore < 50) {
-            badge = 'HIGH RISK 🔴';
-            badgeClass = 'negative';
-        } else {
-            badge = 'AVERAGE 🟡';
-            badgeClass = 'warning';
-        }
-
-        const successRate = devStats.total > 0
-            ? Math.round((devStats.successful / devStats.total) * 100) + '%'
-            : 'N/A';
-
-        // Format average peak for display
-        const avgPeakFormatted = devStats.avgPeakMarketCap
-            ? `$${devStats.avgPeakMarketCap.toLocaleString()}`
-            : 'N/A';
-
-        return {
-            badge,
-            badgeClass,
-            message: `Trust Score: ${finalScore}/100`,
-            otherTokens: devStats.total > 0 ? `${devStats.total} Coins` : '0 Found',
-            rugCount: devStats.rugged > 0 ? `${devStats.rugged} Rugs ⚠️` : '0 Rugs ✅',
-            successRate: successRate,
-            avgPeakMarketCap: avgPeakFormatted,
-            riskLevel: devStats.riskLevel || 'UNKNOWN',
-            tokenHistory: devStats.tokens || [], // Individual token data
-            rawAssets: devStats.assets
-        };
+        return await response.json();
     }
 
     /**
-     * Fetch Creator History from Helius API (via secure serverless function)
-     * @param {string} creatorAddress 
+     * Local fallback for testing - makes direct Helius calls
+     * @param {string} mintAddress
      */
-    async fetchHeliusDevHistory(creatorAddress) {
+    async fetchLocalDevAnalysis(mintAddress) {
+        const apiKey = "9b583a75-fa36-4da9-932d-db8e4e06ae35";
+        const heliusRpc = `https://mainnet.helius-rpc.com/?api-key=${apiKey}`;
+
+        let trustScore = 100;
+        let riskFlags = [];
+        let deployerWallet = null;
+
         try {
-            // Check if running on localhost - if so, use direct API call for testing
-            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            // Step 1: Get signatures to find deployer
+            const sigsResponse = await fetch(heliusRpc, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: 'getSignaturesForAddress',
+                    params: [mintAddress, { limit: 100 }]
+                })
+            });
+            const sigsData = await sigsResponse.json();
 
-            if (isLocalhost) {
-                console.log('Running on localhost: Using direct Helius API call');
-                const apiKey = "9b583a75-fa36-4da9-932d-db8e4e06ae35";
-                const url = `https://mainnet.helius-rpc.com/?api-key=${apiKey}`;
+            // Step 2: Check asset for authorities
+            const assetResponse = await fetch(heliusRpc, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: 'getAsset',
+                    params: { id: mintAddress }
+                })
+            });
+            const assetData = await assetResponse.json();
 
-                const response = await fetch(url, {
+            let mintAuthorityEnabled = false;
+            let freezeAuthorityEnabled = false;
+
+            if (assetData.result && assetData.result.authorities) {
+                mintAuthorityEnabled = assetData.result.authorities.some(
+                    a => a.scopes && a.scopes.includes('mint')
+                );
+                freezeAuthorityEnabled = assetData.result.authorities.some(
+                    a => a.scopes && a.scopes.includes('freeze')
+                );
+
+                if (mintAuthorityEnabled) {
+                    trustScore -= 50;
+                    riskFlags.push("🚨 Mint Authority Enabled");
+                }
+                if (freezeAuthorityEnabled) {
+                    trustScore -= 50;
+                    riskFlags.push("🚨 Freeze Authority Enabled");
+                }
+            }
+
+            // Step 3: Get holder concentration
+            let top10HolderPercent = 0;
+            try {
+                const holdersResponse = await fetch(heliusRpc, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         jsonrpc: '2.0',
-                        id: 'memeradar-check-local',
-                        method: 'searchAssets',
-                        params: {
-                            ownerAddress: creatorAddress,
-                            creatorAddress: creatorAddress,
-                            burnt: false,
-                            page: 1,
-                            limit: 1000,
-                            sortBy: { sortBy: "created", sortDirection: "desc" }
-                        },
-                    }),
+                        id: 1,
+                        method: 'getTokenLargestAccounts',
+                        params: [mintAddress]
+                    })
                 });
+                const holdersData = await holdersResponse.json();
 
-                const data = await response.json();
-                const result = data.result;
+                if (holdersData.result && holdersData.result.value) {
+                    const top10 = holdersData.result.value.slice(0, 10);
+                    const top10Amount = top10.reduce((acc, h) => acc + parseFloat(h.uiAmount || 0), 0);
+                    top10HolderPercent = Math.round((top10Amount / 1000000000) * 100);
 
-                if (!result) return this.fetchPumpFunFallback(creatorAddress);
+                    if (top10HolderPercent > 30) {
+                        trustScore -= 30;
+                        riskFlags.push(`⚠️ Top 10 hold ${top10HolderPercent}%`);
+                    }
+                }
+            } catch (e) { /* skip */ }
 
-                // Calculate stats locally
-                let rugged = 0;
-                let successful = 0;
-                const assets = result.items || [];
-
-                assets.forEach(asset => {
-                    const hasName = asset.content?.metadata?.name;
-                    const isVerified = asset.creators?.some(c => c.verified);
-                    const burnt = asset.burnt;
-
-                    if (burnt || (!hasName && !isVerified)) rugged++;
-                    else if (isVerified || hasName) successful++;
-                });
-
-                return {
-                    total: result.total || assets.length,
-                    rugged: rugged,
-                    successful: successful,
-                    assets: assets.slice(0, 50)
-                };
-            }
-
-            // Production: Call secure API endpoint
-            const response = await fetch('/api/check-dev', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ creatorAddress })
-            });
-
-            if (!response.ok) {
-                // Fallback to Pump.fun API if endpoint fails
-                return await this.fetchPumpFunFallback(creatorAddress);
-            }
-
-            const data = await response.json();
+            const riskLevel = trustScore >= 70 ? 'LOW' : trustScore >= 40 ? 'MEDIUM' : 'DANGER';
 
             return {
-                total: data.totalCreated || 0,
-                rugged: data.rugged || 0,
-                successful: data.successful || 0,
-                avgPeakMarketCap: data.avgPeakMarketCap || 0,
-                riskLevel: data.riskLevel || 'UNKNOWN',
-                tokens: data.tokens || [],
-                assets: data.tokens || []
+                deployerWallet: deployerWallet || 'Auto-Scan Pending',
+                walletAge: 'Scanning...',
+                trustScore: Math.max(0, trustScore),
+                riskLevel: riskLevel,
+                riskFlags: riskFlags,
+                mintAuthorityEnabled: mintAuthorityEnabled,
+                freezeAuthorityEnabled: freezeAuthorityEnabled,
+                top10HolderPercent: top10HolderPercent,
+                totalCreated: 0,
+                rugged: 0,
+                successful: 0,
+                avgPeakMarketCap: 0,
+                tokens: [],
+                hasSocialLinks: false
             };
+
         } catch (e) {
-            console.error('Helius API error:', e);
-            // Fallback to Pump.fun API
-            return await this.fetchPumpFunFallback(creatorAddress);
+            console.error('Local analysis error:', e);
+            throw e;
         }
     }
 
     /**
-     * Fallback to Pump.fun API if Helius fails
-     * @param {string} creatorAddress 
+     * Get badge text from trust score
      */
-    async fetchPumpFunFallback(creatorAddress) {
-        try {
-            const response = await fetch(`https://frontend-api.pump.fun/coins/user-created-coins/${creatorAddress}?offset=0&limit=50&include_nsfw=false`);
-
-            if (!response.ok) return { total: 0, rugged: 0, successful: 0 };
-
-            const coins = await response.json();
-
-            if (!Array.isArray(coins)) return { total: 0, rugged: 0, successful: 0 };
-
-            let rugged = 0;
-            let successful = 0;
-
-            coins.forEach(coin => {
-                if (!coin.complete && coin.market_cap < 500) {
-                    rugged++;
-                }
-                if (coin.complete || coin.market_cap > 50000) {
-                    successful++;
-                }
-            });
-
-            return {
-                total: coins.length,
-                rugged: rugged,
-                successful: successful
-            };
-        } catch (e) {
-            console.error('Pump.fun fallback error:', e);
-            return { total: 0, rugged: 0, successful: 0 };
+    getBadgeFromScore(score, riskLevel) {
+        if (riskLevel === 'LOW' || score >= 70) {
+            return 'TRUSTED DEV 🟢';
+        } else if (riskLevel === 'DANGER' || score < 40) {
+            return 'HIGH RISK 🔴';
+        } else {
+            return 'CAUTION 🟡';
         }
     }
 
@@ -352,12 +286,24 @@ export class DevChecker {
      */
     getDefaultAnalysis(msg) {
         return {
-            badge: 'VERIFY ⚠️',
+            status: 'error',
+            badge: 'UNKNOWN',
             badgeClass: 'warning',
-            message: msg || 'Check dev manually',
-            otherTokens: 'Unknown',
-            rugCount: 'Unknown',
-            successRate: 'Unknown'
+            message: msg,
+            trustScore: 0,
+            riskLevel: 'UNKNOWN',
+            riskFlags: [],
+            deployerWallet: 'Scanning...',
+            walletAge: 'Scanning...',
+            otherTokens: 'Scanning...',
+            rugCount: 'Scanning...',
+            successRate: 'N/A',
+            avgPeakMarketCap: 'N/A',
+            top10HolderPercent: 0,
+            mintAuthorityEnabled: null,
+            freezeAuthorityEnabled: null,
+            hasSocialLinks: null,
+            tokenHistory: []
         };
     }
 
@@ -367,16 +313,21 @@ export class DevChecker {
      * @returns {string} - Badge HTML
      */
     getBadgeHTML(analysis) {
-        const colorMap = {
-            positive: '#00ff88',
-            warning: '#ffaa00',
-            negative: '#ff4444'
-        };
+        const { badge, badgeClass, message, riskFlags } = analysis;
 
-        const color = colorMap[analysis.badgeClass] || colorMap.warning;
+        let flagsHtml = '';
+        if (riskFlags && riskFlags.length > 0) {
+            flagsHtml = `<div style="font-size: 0.7rem; margin-top: 0.25rem; color: var(--text-muted);">${riskFlags.length} flag${riskFlags.length > 1 ? 's' : ''}</div>`;
+        }
 
-        return `<span class="dev-badge" style="color: ${color}; border-color: ${color};">${analysis.badge}</span>`;
+        return `
+            <span class="dev-badge ${badgeClass}" title="${message}">
+                ${badge}
+            </span>
+            ${flagsHtml}
+        `;
     }
 }
 
+export { DevChecker };
 export default DevChecker;
