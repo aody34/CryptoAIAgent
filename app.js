@@ -574,14 +574,35 @@ function setupDevCheckButton() {
                     }
                 }
 
-                // Social Links
+                // View Wallets link - points to Solscan holders page
+                const viewWalletsLink = document.getElementById('viewWalletsLink');
+                if (viewWalletsLink && pair.baseToken?.address) {
+                    viewWalletsLink.href = `https://solscan.io/token/${pair.baseToken.address}#holders`;
+                }
+
+                // Social Links - with icons and actual URLs
                 const socialEl = document.getElementById('devSocialLinks');
                 if (socialEl) {
-                    if (analysis.hasSocialLinks === true) {
-                        socialEl.textContent = '✅ Found';
-                        socialEl.classList.add('positive');
+                    if (analysis.hasSocialLinks && analysis.socialLinks) {
+                        const links = [];
+                        if (analysis.socialLinks.twitter) {
+                            links.push(`<a href="${analysis.socialLinks.twitter}" target="_blank" style="color: var(--accent-primary);">🐦</a>`);
+                        }
+                        if (analysis.socialLinks.telegram) {
+                            links.push(`<a href="${analysis.socialLinks.telegram}" target="_blank" style="color: var(--accent-primary);">✈️</a>`);
+                        }
+                        if (analysis.socialLinks.website) {
+                            links.push(`<a href="${analysis.socialLinks.website}" target="_blank" style="color: var(--accent-primary);">🌐</a>`);
+                        }
+                        if (links.length > 0) {
+                            socialEl.innerHTML = links.join(' ');
+                            socialEl.classList.add('positive');
+                        } else {
+                            socialEl.textContent = '✅ Found';
+                            socialEl.classList.add('positive');
+                        }
                     } else if (analysis.hasSocialLinks === false) {
-                        socialEl.textContent = '❌ None';
+                        socialEl.textContent = '❌ None (High Risk)';
                         socialEl.classList.add('negative');
                     } else {
                         socialEl.textContent = 'Unknown';

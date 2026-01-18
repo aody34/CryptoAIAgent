@@ -299,16 +299,46 @@ export default async function handler(req, res) {
             }
         }
 
-        // ========== STEP 6: Check Social Links ==========
+        // ========== STEP 6: Fetch Social Links from Metadata URI ==========
+        let socialLinks = { twitter: null, telegram: null, website: null };
         let hasSocialLinks = false;
-        if (tokenInfo && tokenInfo.content?.links) {
-            const links = tokenInfo.content.links;
-            hasSocialLinks = links.twitter || links.telegram || links.website;
+
+        if (mintAddress) {
+            try {
+                // Try to get metadata URI from asset
+                if (tokenInfo && tokenInfo.content) {
+                    // Check for links in content
+                    if (tokenInfo.content.links) {
+                        socialLinks.twitter = tokenInfo.content.links.twitter || null;
+                        socialLinks.telegram = tokenInfo.content.links.telegram || null;
+                        socialLinks.website = tokenInfo.content.links.website || null;
+                    }
+
+                    // If no links in content, try to fetch from metadata URI
+                    if (!socialLinks.twitter && !socialLinks.telegram && tokenInfo.content.json_uri) {
+                        try {
+                            const metaResponse = await fetch(tokenInfo.content.json_uri);
+                            if (metaResponse.ok) {
+                                const metaData = await metaResponse.json();
+                                socialLinks.twitter = metaData.twitter || metaData.twitter_link || null;
+                                socialLinks.telegram = metaData.telegram || metaData.telegram_link || null;
+                                socialLinks.website = metaData.website || metaData.external_url || null;
+                            }
+                        } catch (e) {
+                            console.log('Metadata fetch failed:', e);
+                        }
+                    }
+                }
+
+                hasSocialLinks = !!(socialLinks.twitter || socialLinks.telegram || socialLinks.website);
+            } catch (e) {
+                console.error('Error fetching social links:', e);
+            }
         }
 
         if (!hasSocialLinks && mintAddress) {
             trustScore -= 10;
-            riskFlags.push("📵 No social links in metadata (Low Effort)");
+            riskFlags.push("📵 No social links in metadata (Low Effort / High Risk)");
         }
 
         // ========== FINAL: Calculate Risk Level ==========
@@ -323,6 +353,11 @@ export default async function handler(req, res) {
             riskLevel = 'DANGER';
         }
 
+        // Calculate success rate (only if has launched coins)
+        const successRate = totalCreated > 0
+            ? Math.round((successful / totalCreated) * 100)
+            : null; // null indicates "New Creator"
+
         return res.status(200).json({
             deployerWallet: deployerWallet || 'Unknown',
             walletAge: walletAgeText,
@@ -335,8 +370,11 @@ export default async function handler(req, res) {
             totalCreated: totalCreated,
             rugged: rugged,
             successful: successful,
-            avgPeakMarketCap: avgPeakMarketCap,
+            successRate: successRate, // null = New Creator, 0-100 = percentage
+            avgPeakMarketCap: avgPeakMarketCap, // 0 = never generated value
             tokens: tokens,
+            isNewCreator: totalCreated === 0,
+            socialLinks: socialLinks,
             hasSocialLinks: hasSocialLinks
         });
 

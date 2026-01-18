@@ -99,19 +99,25 @@ class DevChecker {
                 // Holder info
                 top10HolderPercent: apiData.top10HolderPercent,
 
-                // Dev history
-                otherTokens: apiData.totalCreated > 0 ? `${apiData.totalCreated} Coins` : '0 Found',
-                rugCount: apiData.rugged > 0 ? `${apiData.rugged} Rugs ⚠️` : '0 Rugs ✅',
-                successRate: apiData.totalCreated > 0
-                    ? Math.round((apiData.successful / apiData.totalCreated) * 100) + '%'
-                    : 'N/A',
-                avgPeakMarketCap: apiData.avgPeakMarketCap > 0
-                    ? `$${apiData.avgPeakMarketCap.toLocaleString()}`
-                    : 'N/A',
+                // Dev history - HONEST display logic
+                otherTokens: apiData.isNewCreator
+                    ? '0 - First Launch 🆕'
+                    : `${apiData.totalCreated} Coins`,
+                rugCount: apiData.isNewCreator
+                    ? 'Unknown Risk ⚪'
+                    : (apiData.rugged > 0 ? `${apiData.rugged} Rugs ⚠️` : `0 Rugs ✅`),
+                successRate: apiData.isNewCreator
+                    ? 'New Creator'
+                    : (apiData.successRate !== null ? `${apiData.successRate}%` : '0%'),
+                avgPeakMarketCap: apiData.isNewCreator
+                    ? 'No History'
+                    : (apiData.avgPeakMarketCap > 0 ? `$${apiData.avgPeakMarketCap.toLocaleString()}` : '$0'),
                 tokenHistory: apiData.tokens || [],
+                isNewCreator: apiData.isNewCreator,
 
-                // Social
+                // Social - with actual links
                 hasSocialLinks: apiData.hasSocialLinks,
+                socialLinks: apiData.socialLinks || { twitter: null, telegram: null, website: null },
 
                 // Links
                 solscanLink: apiData.deployerWallet && apiData.deployerWallet !== 'Unknown'
