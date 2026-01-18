@@ -1512,66 +1512,58 @@ function renderSocialPulse(pair, sentiment) {
  * Render Developer Analysis (Feature 10)
  */
 function renderDevAnalysis(pair, token) {
-    // Pair creation time
-    const pairCreatedAt = pair.pairCreatedAt;
-    if (pairCreatedAt) {
-        const createdDate = new Date(pairCreatedAt);
-        const now = new Date();
-        const ageMs = now - createdDate;
-        const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+    // Reset all dev check fields to "Scanning..." state
+    setElementText('deployerWallet', 'Scanning... 🔄');
+    setElementText('devWalletAge', 'Scanning... 🔄');
+    setElementText('devTrustScoreNum', 'Scanning... 🔄');
 
-        let ageText = '';
-        if (ageDays < 1) ageText = '< 1 day (NEW!)';
-        else if (ageDays < 7) ageText = `${ageDays} days`;
-        else if (ageDays < 30) ageText = `${Math.floor(ageDays / 7)} weeks`;
-        else if (ageDays < 365) ageText = `${Math.floor(ageDays / 30)} months`;
-        else ageText = `${Math.floor(ageDays / 365)} years`;
-
-        setElementText('tokenAge', ageText);
-        setElementText('pairCreated', createdDate.toLocaleDateString());
-
-        // Tokens under 3 days old are higher risk
-        const tokenAgeEl = document.getElementById('tokenAge');
-        if (ageDays < 3) {
-            tokenAgeEl.classList.add('negative');
-        } else if (ageDays < 14) {
-            tokenAgeEl.classList.add('warning');
-        } else {
-            tokenAgeEl.classList.add('positive');
-        }
-    } else {
-        setElementText('tokenAge', 'Unknown');
-        setElementText('pairCreated', 'Unknown');
+    // Reset trust badge
+    const devTrustEl = document.getElementById('devTrustScore');
+    if (devTrustEl) {
+        devTrustEl.innerHTML = '<span class="dev-badge" style="color: #ffaa00; border-color: #ffaa00;">Click Check Dev</span>';
     }
 
-    // Deployer wallet (will be populated by dev check)
-    setElementText('deployerWallet', 'Click "Check Dev"');
+    // Reset security flags
+    setElementText('devMintAuthority', 'Scanning... 🔄');
+    setElementText('devFreezeAuthority', 'Scanning... 🔄');
+    setElementText('devTop10Holders', 'Scanning... 🔄');
+    setElementText('devSocialLinks', 'Scanning... 🔄');
 
-    // Reset dev check fields
-    const devTrustEl = document.getElementById('devTrustScore');
-    devTrustEl.innerHTML = '<span class="dev-badge" style="color: #ffaa00; border-color: #ffaa00;">Click Check Dev</span>';
+    // Hide risk flags list
+    const riskFlagsList = document.getElementById('riskFlagsList');
+    if (riskFlagsList) {
+        riskFlagsList.style.display = 'none';
+    }
 
-    setElementText('devOtherCoins', 'Click "Check Dev"');
-    setElementText('devRugHistory', 'Click "Check Dev"');
-    setElementText('devSuccessRate', 'Click "Check Dev"');
+    // Reset dev coin history
+    setElementText('devOtherCoins', 'Scanning... 🔄');
+    setElementText('devRugHistory', 'Scanning... 🔄');
+    setElementText('devAvgPeakMcap', 'Scanning... 🔄');
+    setElementText('devSuccessRate', 'Scanning... 🔄');
 
     // Dev history links to explorer
     const devHistoryLink = document.getElementById('devHistoryLink');
-    devHistoryLink.href = getExplorerLink(pair.chainId, pair.pairAddress);
+    if (devHistoryLink) {
+        devHistoryLink.href = getExplorerLink(pair.chainId, pair.pairAddress);
+    }
 
     // Dev other tokens link
     const devTokensLink = document.getElementById('devTokensLink');
-    devTokensLink.href = getExplorerTokensLink(pair.chainId, token.address);
+    if (devTokensLink) {
+        devTokensLink.href = getExplorerTokensLink(pair.chainId, token.address);
+    }
 
     // Pump.fun link (Solana only) - link to token page which shows creator
     const pumpfunLink = document.getElementById('pumpfunLink');
-    if (pair.chainId === 'solana') {
-        // Use pump.fun token page which shows creator info and their other coins
-        pumpfunLink.href = `https://pump.fun/coin/${token.address}`;
-        pumpfunLink.style.display = 'inline-flex';
-    } else {
-        // Hide Pump.fun button for non-Solana tokens
-        pumpfunLink.style.display = 'none';
+    if (pumpfunLink) {
+        if (pair.chainId === 'solana') {
+            // Use pump.fun token page which shows creator info and their other coins
+            pumpfunLink.href = `https://pump.fun/coin/${token.address}`;
+            pumpfunLink.style.display = 'inline-flex';
+        } else {
+            // Hide Pump.fun button for non-Solana tokens
+            pumpfunLink.style.display = 'none';
+        }
     }
 }
 
