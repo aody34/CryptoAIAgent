@@ -162,33 +162,49 @@ export class DevChecker {
             score += 20;
         }
 
-        // Adjust score based on Dev history (Helius)
+        // Adjust score based on Dev history (Helius + Dexscreener)
         if (devStats.total > 0) {
             if (devStats.rugged > 0) score -= (devStats.rugged * 10); // Penalty for rugs
             if (devStats.successful > 0) score += (devStats.successful * 5); // Bonus for success
+        }
+
+        // NEW: Adjust score based on average peak market cap
+        if (devStats.avgPeakMarketCap) {
+            if (devStats.avgPeakMarketCap >= 100000) {
+                score += 15; // Builder - avg peak > $100k
+            } else if (devStats.avgPeakMarketCap >= 10000) {
+                score += 0; // Neutral
+            } else {
+                score -= 20; // Serial rugger - avg peak < $10k
+            }
         }
 
         // Normalize Score (0-100)
         let finalScore = 40 + score;
         finalScore = Math.min(100, Math.max(0, finalScore));
 
-        // Determine Badge
+        // Determine Badge (enhanced with riskLevel from API)
         let badge = 'UNKNOWN';
         let badgeClass = 'warning';
 
-        if (finalScore >= 80) {
+        if (devStats.riskLevel === 'LOW' || finalScore >= 80) {
             badge = 'TRUSTED DEV 🟢';
             badgeClass = 'positive';
-        } else if (finalScore >= 50) {
-            badge = 'AVERAGE 🟡';
-            badgeClass = 'warning';
-        } else {
+        } else if (devStats.riskLevel === 'HIGH' || finalScore < 50) {
             badge = 'HIGH RISK 🔴';
             badgeClass = 'negative';
+        } else {
+            badge = 'AVERAGE 🟡';
+            badgeClass = 'warning';
         }
 
         const successRate = devStats.total > 0
             ? Math.round((devStats.successful / devStats.total) * 100) + '%'
+            : 'N/A';
+
+        // Format average peak for display
+        const avgPeakFormatted = devStats.avgPeakMarketCap
+            ? `$${devStats.avgPeakMarketCap.toLocaleString()}`
             : 'N/A';
 
         return {
@@ -198,7 +214,10 @@ export class DevChecker {
             otherTokens: devStats.total > 0 ? `${devStats.total} Coins` : '0 Found',
             rugCount: devStats.rugged > 0 ? `${devStats.rugged} Rugs ⚠️` : '0 Rugs ✅',
             successRate: successRate,
-            rawAssets: devStats.assets // Pass raw assets for potential display
+            avgPeakMarketCap: avgPeakFormatted,
+            riskLevel: devStats.riskLevel || 'UNKNOWN',
+            tokenHistory: devStats.tokens || [], // Individual token data
+            rawAssets: devStats.assets
         };
     }
 
@@ -279,7 +298,10 @@ export class DevChecker {
                 total: data.totalCreated || 0,
                 rugged: data.rugged || 0,
                 successful: data.successful || 0,
-                assets: data.assets || []
+                avgPeakMarketCap: data.avgPeakMarketCap || 0,
+                riskLevel: data.riskLevel || 'UNKNOWN',
+                tokens: data.tokens || [],
+                assets: data.tokens || []
             };
         } catch (e) {
             console.error('Helius API error:', e);

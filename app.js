@@ -496,7 +496,37 @@ function setupDevCheckButton() {
                 // Update numerical metrics with REAL data
                 setElementText('devOtherCoins', analysis.otherTokens);
                 setElementText('devRugHistory', analysis.rugCount);
-                setElementText('devSuccessRate', analysis.successRate);
+
+                // NEW: Update Avg Peak Market Cap
+                const avgPeakEl = document.getElementById('devAvgPeakMcap');
+                if (avgPeakEl) {
+                    avgPeakEl.textContent = analysis.avgPeakMarketCap || 'N/A';
+                    avgPeakEl.classList.remove('positive', 'negative', 'warning');
+                    // Color based on value
+                    const peakValue = parseInt(String(analysis.avgPeakMarketCap).replace(/[$,]/g, '')) || 0;
+                    if (peakValue >= 100000) {
+                        avgPeakEl.classList.add('positive');
+                    } else if (peakValue >= 10000) {
+                        avgPeakEl.classList.add('warning');
+                    } else if (peakValue > 0) {
+                        avgPeakEl.classList.add('negative');
+                    }
+                }
+
+                // NEW: Update Risk Level with styling
+                const riskLevelEl = document.getElementById('devRiskLevel');
+                if (riskLevelEl) {
+                    const riskLevel = analysis.riskLevel || 'UNKNOWN';
+                    riskLevelEl.textContent = riskLevel;
+                    riskLevelEl.classList.remove('positive', 'negative', 'warning');
+                    if (riskLevel === 'LOW') {
+                        riskLevelEl.classList.add('positive');
+                    } else if (riskLevel === 'HIGH') {
+                        riskLevelEl.classList.add('negative');
+                    } else {
+                        riskLevelEl.classList.add('warning');
+                    }
+                }
 
                 // Update deployer wallet address text
                 if (analysis.deployerWallet && analysis.deployerWallet !== 'Unknown') {
