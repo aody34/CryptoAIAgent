@@ -2037,18 +2037,27 @@ async function analyzeWalletAddress(address) {
 
     try {
         // Fetch wallet summary using Moralis API
+        console.log('[WALLET] Fetching wallet summary for:', address);
         const summary = await moralisAPI.getWalletSummary(address);
+        console.log('[WALLET] Got summary:', summary);
 
         if (summary.error) {
+            console.log('[WALLET] Summary has error:', summary.error);
             throw new Error(summary.error);
         }
 
         // Render wallet analysis results
+        console.log('[WALLET] Rendering wallet deep dive...');
         renderWalletDeepDive(summary);
 
         // Show results
         if (loadingEl) loadingEl.style.display = 'none';
-        if (resultsEl) resultsEl.style.display = 'block';
+        if (resultsEl) {
+            resultsEl.style.display = 'block';
+            console.log('[WALLET] Showing results element');
+        } else {
+            console.log('[WALLET] ERROR: resultsEl not found!');
+        }
 
         showToast(`Wallet analyzed: ${summary.shortAddress}`);
 
