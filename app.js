@@ -795,6 +795,73 @@ function setRiskMeter(id, level) {
 }
 
 /**
+ * Switch to wallet-only mode (hide token cards, show only wallet section)
+ */
+function showWalletOnlyMode() {
+    // List of card IDs to hide (token analysis cards)
+    const tokenCardIds = [
+        'tokenCard',
+        'tab-overview',
+        'resultsTabs'
+    ];
+
+    // Hide token-related cards
+    tokenCardIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+
+    // Hide all cards in section-grid except walletDeepDiveCard
+    const sectionGrid = document.querySelector('.section-grid');
+    if (sectionGrid) {
+        const allCards = sectionGrid.querySelectorAll('.card');
+        allCards.forEach(card => {
+            if (card.id !== 'walletDeepDiveCard') {
+                card.style.display = 'none';
+            } else {
+                card.style.display = 'block';
+            }
+        });
+    }
+
+    // Show wallet card prominently
+    const walletCard = document.getElementById('walletDeepDiveCard');
+    if (walletCard) {
+        walletCard.style.display = 'block';
+        walletCard.style.gridColumn = '1 / -1';
+    }
+
+    console.log('[UI] Switched to wallet-only mode');
+}
+
+/**
+ * Switch to token mode (show all cards for normal token analysis)
+ */
+function showTokenMode() {
+    // Show tabs
+    const tabs = document.getElementById('resultsTabs');
+    if (tabs) tabs.style.display = '';
+
+    // Show all cards in section-grid
+    const sectionGrid = document.querySelector('.section-grid');
+    if (sectionGrid) {
+        const allCards = sectionGrid.querySelectorAll('.card');
+        allCards.forEach(card => {
+            card.style.display = '';
+        });
+    }
+
+    // Show token card and tab overview
+    const tokenCard = document.getElementById('tokenCard');
+    if (tokenCard) tokenCard.style.display = '';
+
+    const tabOverview = document.getElementById('tab-overview');
+    if (tabOverview) tabOverview.style.display = '';
+
+    console.log('[UI] Switched to token mode');
+}
+
+/**
  * Update evidence badges with specific data and make them clickable
  * @param {Object} pair - Token pair data
  * @param {Object} risks - Risk analysis
@@ -1705,14 +1772,17 @@ async function analyzeToken(query) {
                 // If we find trading pairs, it's a token
                 if (quickCheck.pairs && quickCheck.pairs.length > 0) {
                     console.log('[ANALYZE] Address has trading pairs - treating as token');
+                    // Restore token mode (show all cards)
+                    showTokenMode();
                     // Continue with normal token analysis below
                 } else {
                     // No trading pairs found - likely a wallet address
                     console.log('[ANALYZE] No trading pairs found - treating as wallet address');
                     hideLoading();
 
-                    // IMPORTANT: Show results section so wallet card is visible
+                    // IMPORTANT: Show results section and switch to wallet-only mode
                     showResults();
+                    showWalletOnlyMode();
 
                     // Hide trending section
                     if (trendingSection) trendingSection.style.display = 'none';
@@ -1725,9 +1795,9 @@ async function analyzeToken(query) {
                         // Fill the wallet input
                         walletInput.value = query;
 
-                        // Scroll to the section after a brief delay for DOM update
+                        // Scroll to top of results section
                         setTimeout(() => {
-                            walletCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         }, 100);
 
                         // Trigger analysis after scroll
@@ -1735,7 +1805,7 @@ async function analyzeToken(query) {
                             analyzeWalletAddress(query);
                         }, 300);
 
-                        showToast('💡 This looks like a wallet address - analyzing wallet instead');
+                        showToast('� Analyzing wallet...');
                         return;
                     }
                 }
@@ -1743,28 +1813,29 @@ async function analyzeToken(query) {
                 console.log('[ANALYZE] Quick check failed, assuming wallet address');
                 hideLoading();
 
-                // IMPORTANT: Show results section so wallet card is visible
+                // Show results section and switch to wallet-only mode
                 showResults();
+                showWalletOnlyMode();
                 if (trendingSection) trendingSection.style.display = 'none';
 
                 // Redirect to wallet analysis
                 const walletInput = document.getElementById('walletAnalysisInput');
                 if (walletInput) {
                     walletInput.value = query;
-                    const walletCard = document.getElementById('walletDeepDiveCard');
-                    if (walletCard) {
-                        setTimeout(() => {
-                            walletCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }, 100);
-                        setTimeout(() => analyzeWalletAddress(query), 300);
-                    }
+                    setTimeout(() => {
+                        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                    setTimeout(() => analyzeWalletAddress(query), 300);
                 }
-                showToast('💡 Analyzing as wallet address');
+                showToast('🔬 Analyzing wallet...');
                 return;
             }
         }
 
         // ========== NORMAL TOKEN ANALYSIS ==========
+        // Restore token mode in case we were in wallet mode before
+        showTokenMode();
+
         // Update progress
         updateLoadingProgress(20, 'Searching Dexscreener...');
 
