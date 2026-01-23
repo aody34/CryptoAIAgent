@@ -39,6 +39,28 @@ class MoralisAPI {
     }
 
     /**
+     * Clear cache for an address or all cache
+     * @param {string} address - Optional address to clear (clears all if not provided)
+     */
+    clearCache(address = null) {
+        if (address) {
+            // Clear specific address cache
+            const keysToDelete = [];
+            for (const key of this.cache.keys()) {
+                if (key.startsWith(address)) {
+                    keysToDelete.push(key);
+                }
+            }
+            keysToDelete.forEach(key => this.cache.delete(key));
+            console.log(`[MoralisAPI] Cleared cache for ${address.slice(0, 8)}...`);
+        } else {
+            // Clear all cache
+            this.cache.clear();
+            console.log('[MoralisAPI] Cleared all cache');
+        }
+    }
+
+    /**
      * Make API request to our serverless function
      * @param {string} address - Wallet address
      * @param {string} type - Request type
@@ -188,6 +210,11 @@ class MoralisAPI {
 
 // Singleton instance
 const moralisAPI = new MoralisAPI();
+
+// Expose to window for debugging (allows console: moralisAPI.clearCache())
+if (typeof window !== 'undefined') {
+    window.moralisAPI = moralisAPI;
+}
 
 export { MoralisAPI, moralisAPI };
 export default moralisAPI;
