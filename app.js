@@ -20,6 +20,7 @@ import { FreshPairsManager } from './freshPairs.js';
 import { TrendingManager } from './trending.js';
 import { DevChecker } from './devChecker.js';
 import { URLRouter } from './router.js';
+import moralisAPI from './moralisApi.js';
 // import { solanaRPC } from './rpc.js';
 
 // Initialize API and modules
@@ -1837,3 +1838,245 @@ window.addEventListener('hashchange', () => {
 console.log('%c🤖 MemeRadar Loaded', 'color: #00ff88; font-size: 16px; font-weight: bold;');
 console.log('%cTry searching for: WIF, BONK, POPCAT, or any Solana memecoin ticker', 'color: #a0a0b0;');
 console.log('%cDeep linking enabled - share URLs with #ContractAddress', 'color: #a0a0b0;');
+
+// ===========================================
+// WALLET DEEP DIVE (Moralis Powered)
+// ===========================================
+
+/**
+ * Setup Wallet Deep Dive functionality
+ */
+function setupWalletDeepDive() {
+    const analyzeWalletBtn = document.getElementById('analyzeWalletBtn');
+    const walletInput = document.getElementById('walletAnalysisInput');
+
+    if (analyzeWalletBtn && walletInput) {
+        analyzeWalletBtn.addEventListener('click', () => {
+            const address = walletInput.value.trim();
+            if (address) {
+                analyzeWalletAddress(address);
+            }
+        });
+
+        walletInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const address = walletInput.value.trim();
+                if (address) {
+                    analyzeWalletAddress(address);
+                }
+            }
+        });
+    }
+}
+
+/**
+ * Analyze a wallet address using Moralis API
+ * @param {string} address - Solana wallet address
+ */
+async function analyzeWalletAddress(address) {
+    const resultsEl = document.getElementById('walletAnalysisResults');
+    const loadingEl = document.getElementById('walletAnalysisLoading');
+    const errorEl = document.getElementById('walletAnalysisError');
+
+    // Validate Solana address format
+    const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+    if (!solanaAddressRegex.test(address)) {
+        showWalletError('Invalid Solana wallet address format');
+        return;
+    }
+
+    // Show loading state
+    if (resultsEl) resultsEl.style.display = 'none';
+    if (errorEl) errorEl.style.display = 'none';
+    if (loadingEl) loadingEl.style.display = 'block';
+
+    try {
+        // Fetch wallet summary using Moralis API
+        const summary = await moralisAPI.getWalletSummary(address);
+
+        if (summary.error) {
+            throw new Error(summary.error);
+        }
+
+        // Render wallet analysis results
+        renderWalletDeepDive(summary);
+
+        // Show results
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (resultsEl) resultsEl.style.display = 'block';
+
+        showToast(`Wallet analyzed: ${summary.shortAddress}`);
+
+    } catch (error) {
+        console.error('Wallet analysis failed:', error);
+        showWalletError(error.message || 'Failed to analyze wallet');
+    }
+}
+
+/**
+ * Show wallet analysis error
+ * @param {string} message - Error message
+ */
+function showWalletError(message) {
+    const resultsEl = document.getElementById('walletAnalysisResults');
+    const loadingEl = document.getElementById('walletAnalysisLoading');
+    const errorEl = document.getElementById('walletAnalysisError');
+    const errorMsgEl = document.getElementById('walletAnalysisErrorMsg');
+
+    if (resultsEl) resultsEl.style.display = 'none';
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (errorEl) errorEl.style.display = 'block';
+    if (errorMsgEl) errorMsgEl.textContent = message;
+}
+
+/**
+ * Render wallet deep dive analysis results
+ * @param {Object} summary - Wallet summary data from Moralis
+ */
+function renderWalletDeepDive(summary) {
+    // Address
+    const addressEl = document.getElementById('walletAnalysisAddress');
+    if (addressEl) {
+        addressEl.innerHTML = `<a href="https://solscan.io/account/${summary.address}" target="_blank" style="color: var(--accent-primary);">${summary.shortAddress}</a>`;
+    }
+
+    // Net Worth
+    const netWorthEl = document.getElementById('walletNetWorth');
+    if (netWorthEl) {
+        netWorthEl.textContent = `$${formatCurrency(summary.netWorthUSD)}`;
+    }
+
+    // SOL Balance
+    const solBalanceEl = document.getElementById('walletSolBalance');
+    if (solBalanceEl) {
+        solBalanceEl.textContent = `${summary.solBalance?.toFixed(4) || 0} SOL`;
+    }
+
+    // Token Count
+    const tokenCountEl = document.getElementById('walletTokenCount');
+    if (tokenCountEl) {
+        tokenCountEl.textContent = summary.tokenCount || 0;
+    }
+
+    // Wallet Age
+    const walletAgeEl = document.getElementById('walletAge');
+    if (walletAgeEl && summary.walletAge) {
+        if (summary.walletAge.isBurner) {
+            walletAgeEl.innerHTML = `<span class="negative">${summary.walletAge.hours}h (BURNER!)</span>`;
+        } else if (summary.walletAge.days !== null) {
+            walletAgeEl.textContent = summary.walletAge.days < 30
+                ? `${summary.walletAge.days} days`
+                : `${Math.floor(summary.walletAge.days / 30)} months`;
+        } else {
+            walletAgeEl.textContent = 'Unknown';
+        }
+    }
+
+    // Trust Score
+    const trustScoreEl = document.getElementById('walletTrustScore');
+    if (trustScoreEl) {
+        trustScoreEl.textContent = `${summary.trustScore}/100`;
+        trustScoreEl.classList.remove('positive', 'negative', 'warning');
+        if (summary.trustScore >= 70) {
+            trustScoreEl.classList.add('positive');
+        } else if (summary.trustScore < 40) {
+            trustScoreEl.classList.add('negative');
+        } else {
+            trustScoreEl.classList.add('warning');
+        }
+    }
+
+    // Badges
+    const badgesEl = document.getElementById('walletBadges');
+    if (badgesEl) {
+        const badges = [];
+        if (summary.isWhale) {
+            badges.push('<span class="wallet-badge whale">🐋 WHALE</span>');
+        }
+        if (summary.isBurner) {
+            badges.push('<span class="wallet-badge burner">🔥 BURNER</span>');
+        }
+        if (summary.transactionCount > 100) {
+            badges.push('<span class="wallet-badge active">⚡ ACTIVE</span>');
+        }
+        badgesEl.innerHTML = badges.join('');
+    }
+
+    // Risk Flags
+    const riskFlagsEl = document.getElementById('walletRiskFlags');
+    const riskFlagsListEl = document.getElementById('walletRiskFlagsList');
+    if (riskFlagsEl && riskFlagsListEl && summary.flags && summary.flags.length > 0) {
+        riskFlagsEl.style.display = 'block';
+        riskFlagsListEl.innerHTML = summary.flags.map(flag =>
+            `<span class="risk-flag-badge">${flag}</span>`
+        ).join('');
+    } else if (riskFlagsEl) {
+        riskFlagsEl.style.display = 'none';
+    }
+
+    // Token Portfolio
+    const portfolioEl = document.getElementById('walletTokenPortfolio');
+    if (portfolioEl && summary.topTokens && summary.topTokens.length > 0) {
+        portfolioEl.innerHTML = summary.topTokens.map(token => `
+            <div class="portfolio-token-item" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: var(--bg-glass); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                ${token.logo ? `<img src="${token.logo}" alt="${token.symbol}" style="width: 24px; height: 24px; border-radius: 50%;">` : '<div style="width: 24px; height: 24px; border-radius: 50%; background: var(--accent-primary); display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">💎</div>'}
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${token.symbol || 'Unknown'}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">${formatNumber(token.amount || 0)}</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-weight: 600; color: var(--accent-primary); font-size: 0.85rem;">${token.usdValue ? '$' + formatCurrency(token.usdValue) : '--'}</div>
+                </div>
+            </div>
+        `).join('');
+    } else if (portfolioEl) {
+        portfolioEl.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 1rem;">No tokens found</div>';
+    }
+
+    // Recent Activity (simplified)
+    const activityEl = document.getElementById('walletRecentActivity');
+    if (activityEl) {
+        if (summary.transactionCount > 0) {
+            activityEl.innerHTML = `
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-muted);">Total Transactions</span>
+                    <span style="font-weight: 600;">${summary.transactionCount}</span>
+                </div>
+                <div style="text-align: center; padding: 1rem; color: var(--text-muted);">
+                    <a href="https://solscan.io/account/${summary.address}#transactions" target="_blank" style="color: var(--accent-primary);">View full history on Solscan →</a>
+                </div>
+            `;
+        } else {
+            activityEl.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 1rem;">No transaction history available</div>';
+        }
+    }
+}
+
+/**
+ * Auto-fill wallet input when clicking on holder addresses
+ * @param {string} address - Wallet address to analyze
+ */
+function triggerWalletDeepDive(address) {
+    const walletInput = document.getElementById('walletAnalysisInput');
+    if (walletInput) {
+        walletInput.value = address;
+        analyzeWalletAddress(address);
+
+        // Scroll to wallet deep dive section
+        const walletCard = document.getElementById('walletDeepDiveCard');
+        if (walletCard) {
+            walletCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+}
+
+// Make triggerWalletDeepDive globally accessible
+window.triggerWalletDeepDive = triggerWalletDeepDive;
+
+// Initialize wallet deep dive on page load
+document.addEventListener('DOMContentLoaded', setupWalletDeepDive);
+// Also try immediately in case DOM is already ready
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setupWalletDeepDive();
+}
+

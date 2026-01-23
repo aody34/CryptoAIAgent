@@ -2068,3 +2068,113 @@ h4 {
     border-top: 1px solid var(--border-color);
   }
 }
+
+/* ===========================================
+   WALLET DEEP DIVE (Moralis Powered)
+   =========================================== */
+
+/* Wallet Badges */
+.wallet-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.wallet-badge.whale {
+  background: rgba(0, 170, 255, 0.2);
+  color: #00aaff;
+  border: 1px solid rgba(0, 170, 255, 0.4);
+}
+
+.wallet-badge.burner {
+  background: rgba(255, 68, 68, 0.2);
+  color: #ff4444;
+  border: 1px solid rgba(255, 68, 68, 0.4);
+  animation: pulse-danger 1.5s infinite;
+}
+
+.wallet-badge.active {
+  background: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+  border: 1px solid rgba(0, 255, 136, 0.4);
+}
+
+@keyframes pulse-danger {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Risk Flag Badges */
+.risk-flag-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  background: rgba(255, 170, 0, 0.15);
+  border: 1px solid rgba(255, 170, 0, 0.3);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  color: var(--warning);
+}
+
+/* Portfolio Token Item */
+.portfolio-token-item {
+  transition: var(--transition-fast);
+}
+
+.portfolio-token-item:hover {
+  border-color: var(--accent-primary);
+  background: rgba(0, 255, 136, 0.05);
+}
+
+/* Wallet Search Input Focus */
+.wallet-search-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+}
+
+/* Powered Badge */
+.powered-badge {
+  animation: subtle-glow 3s ease-in-out infinite;
+}
+
+@keyframes subtle-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 136, 0.2); }
+  50% { box-shadow: 0 0 15px rgba(0, 255, 136, 0.4); }
+}
+
+/* Wallet Deep Dive Card Styling */
+#walletDeepDiveCard {
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  background: linear-gradient(135deg, var(--bg-card), rgba(0, 255, 136, 0.02));
+}
+
+#walletDeepDiveCard:hover {
+  border-color: rgba(0, 255, 136, 0.4);
+}
+
+/* Responsive adjustments for wallet grid */
+@media (max-width: 768px) {
+  #walletTokenPortfolio {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .wallet-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .wallet-header > div:last-child {
+    text-align: center !important;
+    margin-top: 1rem;
+  }
+  
+  .data-grid[style*="repeat(4, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}

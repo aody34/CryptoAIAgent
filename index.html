@@ -585,6 +585,114 @@
               </div>
             </div>
 
+            <!-- 🆕 Wallet Deep Dive (Moralis Powered) -->
+            <div class="card" style="grid-column: 1 / -1;" id="walletDeepDiveCard">
+              <div class="card-header">
+                <div class="card-icon">🔬</div>
+                <h3 class="card-title">Wallet Deep Dive</h3>
+                <span class="powered-badge"
+                  style="margin-left: auto; font-size: 0.7rem; background: rgba(0,255,136,0.1); padding: 0.25rem 0.5rem; border-radius: 4px; color: var(--accent-primary);">Powered
+                  by Moralis</span>
+              </div>
+
+              <!-- Wallet Search -->
+              <div class="wallet-search-container" style="margin-bottom: 1.5rem;">
+                <div class="data-label" style="margin-bottom: 0.5rem;">Analyze Any Wallet</div>
+                <div style="display: flex; gap: 0.5rem;">
+                  <input type="text" id="walletAnalysisInput" class="wallet-search-input"
+                    placeholder="Enter Solana wallet address to analyze..."
+                    style="flex: 1; background: var(--bg-glass); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.75rem 1rem; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+                  <button id="analyzeWalletBtn" class="action-btn" style="white-space: nowrap;">
+                    🔍 Analyze
+                  </button>
+                </div>
+              </div>
+
+              <!-- Wallet Analysis Results -->
+              <div id="walletAnalysisResults" style="display: none;">
+                <!-- Wallet Header -->
+                <div class="wallet-header"
+                  style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-glass); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                  <div style="font-size: 2.5rem;">👛</div>
+                  <div style="flex: 1;">
+                    <div class="wallet-address mono" id="walletAnalysisAddress"
+                      style="font-size: 0.9rem; color: var(--text-secondary);">Loading...</div>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;" id="walletBadges">
+                      <!-- Badges injected by JS -->
+                    </div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div class="data-label">Net Worth</div>
+                    <div id="walletNetWorth" style="font-size: 1.5rem; font-weight: 700; color: var(--accent-primary);">
+                      $0.00</div>
+                  </div>
+                </div>
+
+                <!-- Quick Stats Grid -->
+                <div class="data-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 1.5rem;">
+                  <div class="data-item">
+                    <div class="data-label">SOL Balance</div>
+                    <div class="data-value" id="walletSolBalance">0 SOL</div>
+                  </div>
+                  <div class="data-item">
+                    <div class="data-label">Token Count</div>
+                    <div class="data-value" id="walletTokenCount">0</div>
+                  </div>
+                  <div class="data-item">
+                    <div class="data-label">Wallet Age</div>
+                    <div class="data-value" id="walletAge">Unknown</div>
+                  </div>
+                  <div class="data-item">
+                    <div class="data-label">Trust Score</div>
+                    <div class="data-value" id="walletTrustScore">--/100</div>
+                  </div>
+                </div>
+
+                <!-- Risk Flags -->
+                <div id="walletRiskFlags"
+                  style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(255,170,0,0.1); border-radius: var(--radius-md); border: 1px solid rgba(255,170,0,0.3); display: none;">
+                  <div class="data-label" style="margin-bottom: 0.5rem;">⚠️ Risk Indicators</div>
+                  <div id="walletRiskFlagsList" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <!-- Injected by JS -->
+                  </div>
+                </div>
+
+                <!-- Token Portfolio -->
+                <div style="margin-bottom: 1.5rem;">
+                  <div class="data-label" style="margin-bottom: 0.75rem;">💎 Token Portfolio (Top 10)</div>
+                  <div id="walletTokenPortfolio" class="token-portfolio-grid"
+                    style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
+                    <div class="portfolio-loading"
+                      style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: var(--text-muted);">
+                      Click "Analyze" to load portfolio
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div>
+                  <div class="data-label" style="margin-bottom: 0.75rem;">📜 Recent Activity</div>
+                  <div id="walletRecentActivity"
+                    style="max-height: 200px; overflow-y: auto; background: var(--bg-glass); border-radius: var(--radius-sm); padding: 0.75rem;">
+                    <div style="text-align: center; color: var(--text-muted); padding: 1rem;">No activity loaded</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Loading State -->
+              <div id="walletAnalysisLoading" style="display: none; text-align: center; padding: 3rem;">
+                <div class="loading-spinner"></div>
+                <p style="margin-top: 1rem; color: var(--text-muted);">Fetching wallet data from Moralis...</p>
+              </div>
+
+              <!-- Error State -->
+              <div id="walletAnalysisError"
+                style="display: none; text-align: center; padding: 2rem; background: rgba(255,68,68,0.1); border-radius: var(--radius-md); border: 1px solid rgba(255,68,68,0.3);">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">❌</div>
+                <p id="walletAnalysisErrorMsg" style="color: var(--danger);">Failed to analyze wallet</p>
+              </div>
+            </div>
+
             <!-- 9. Social Pulse -->
             <div class="card">
               <div class="card-header">

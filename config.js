@@ -10,6 +10,17 @@ export const CONFIG = {
     DEXSCREENER_TOKENS: '/latest/dex/tokens',
     DEXSCREENER_PAIRS: '/latest/dex/pairs',
     DEXSCREENER_PROFILES: '/token-profiles/latest/v1',
+    // Moralis Wallet Analysis (via serverless function)
+    MORALIS_WALLET: '/api/wallet-analysis',
+  },
+
+  // Whale & Burner Detection Thresholds
+  WHALE: {
+    MIN_VALUE_USD: 100000,        // $100K+ = whale wallet
+    SUBSTANTIAL_USD: 10000,       // $10K+ = substantial holdings
+    BURNER_AGE_HOURS: 24,         // Wallet < 24h old = burner
+    NEW_WALLET_DAYS: 7,           // Wallet < 7 days = new
+    ESTABLISHED_DAYS: 365,        // Wallet > 1 year = established
   },
 
   // Blocked large-cap tokens (these should NOT be analyzed)
