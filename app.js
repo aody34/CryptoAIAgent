@@ -1691,6 +1691,66 @@ async function analyzeToken(query) {
     showLoading();
 
     try {
+        // ========== SMART DETECTION: Token vs Wallet ==========
+        // Check if this looks like a Solana wallet address (not a token)
+        const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+        if (solanaAddressRegex.test(query) && query.length >= 32) {
+            // First, try to see if it's a token by searching Dexscreener
+            updateLoadingProgress(20, 'Checking if this is a token or wallet...');
+
+            try {
+                const quickCheck = await api.searchToken(query);
+
+                // If we find trading pairs, it's a token
+                if (quickCheck.pairs && quickCheck.pairs.length > 0) {
+                    console.log('[ANALYZE] Address has trading pairs - treating as token');
+                    // Continue with normal token analysis below
+                } else {
+                    // No trading pairs found - likely a wallet address
+                    console.log('[ANALYZE] No trading pairs found - treating as wallet address');
+                    hideLoading();
+
+                    // Scroll to wallet deep dive section
+                    const walletCard = document.getElementById('walletDeepDiveCard');
+                    const walletInput = document.getElementById('walletAnalysisInput');
+
+                    if (walletCard && walletInput) {
+                        // Fill the wallet input
+                        walletInput.value = query;
+
+                        // Scroll to the section
+                        walletCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                        // Trigger analysis after scroll
+                        setTimeout(() => {
+                            analyzeWalletAddress(query);
+                        }, 500);
+
+                        showToast('💡 This looks like a wallet address - analyzing wallet instead');
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log('[ANALYZE] Quick check failed, assuming wallet address');
+                hideLoading();
+
+                // Redirect to wallet analysis
+                const walletInput = document.getElementById('walletAnalysisInput');
+                if (walletInput) {
+                    walletInput.value = query;
+                    const walletCard = document.getElementById('walletDeepDiveCard');
+                    if (walletCard) {
+                        walletCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        setTimeout(() => analyzeWalletAddress(query), 500);
+                    }
+                }
+                showToast('💡 Analyzing as wallet address');
+                return;
+            }
+        }
+
+        // ========== NORMAL TOKEN ANALYSIS ==========
         // Update progress
         updateLoadingProgress(20, 'Searching Dexscreener...');
 
