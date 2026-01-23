@@ -1711,6 +1711,12 @@ async function analyzeToken(query) {
                     console.log('[ANALYZE] No trading pairs found - treating as wallet address');
                     hideLoading();
 
+                    // IMPORTANT: Show results section so wallet card is visible
+                    showResults();
+
+                    // Hide trending section
+                    if (trendingSection) trendingSection.style.display = 'none';
+
                     // Scroll to wallet deep dive section
                     const walletCard = document.getElementById('walletDeepDiveCard');
                     const walletInput = document.getElementById('walletAnalysisInput');
@@ -1719,13 +1725,15 @@ async function analyzeToken(query) {
                         // Fill the wallet input
                         walletInput.value = query;
 
-                        // Scroll to the section
-                        walletCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // Scroll to the section after a brief delay for DOM update
+                        setTimeout(() => {
+                            walletCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 100);
 
                         // Trigger analysis after scroll
                         setTimeout(() => {
                             analyzeWalletAddress(query);
-                        }, 500);
+                        }, 300);
 
                         showToast('💡 This looks like a wallet address - analyzing wallet instead');
                         return;
@@ -1735,14 +1743,20 @@ async function analyzeToken(query) {
                 console.log('[ANALYZE] Quick check failed, assuming wallet address');
                 hideLoading();
 
+                // IMPORTANT: Show results section so wallet card is visible
+                showResults();
+                if (trendingSection) trendingSection.style.display = 'none';
+
                 // Redirect to wallet analysis
                 const walletInput = document.getElementById('walletAnalysisInput');
                 if (walletInput) {
                     walletInput.value = query;
                     const walletCard = document.getElementById('walletDeepDiveCard');
                     if (walletCard) {
-                        walletCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        setTimeout(() => analyzeWalletAddress(query), 500);
+                        setTimeout(() => {
+                            walletCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 100);
+                        setTimeout(() => analyzeWalletAddress(query), 300);
                     }
                 }
                 showToast('💡 Analyzing as wallet address');
