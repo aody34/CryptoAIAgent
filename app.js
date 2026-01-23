@@ -1781,7 +1781,9 @@ async function analyzeToken(query) {
                     hideLoading();
 
                     // IMPORTANT: Show results section and switch to wallet-only mode
+                    console.log('[WALLET-FLOW] Calling showResults()');
                     showResults();
+                    console.log('[WALLET-FLOW] Calling showWalletOnlyMode()');
                     showWalletOnlyMode();
 
                     // Hide trending section
@@ -1791,22 +1793,30 @@ async function analyzeToken(query) {
                     const walletCard = document.getElementById('walletDeepDiveCard');
                     const walletInput = document.getElementById('walletAnalysisInput');
 
+                    console.log('[WALLET-FLOW] walletCard found:', !!walletCard);
+                    console.log('[WALLET-FLOW] walletInput found:', !!walletInput);
+                    console.log('[WALLET-FLOW] resultsSection visible:', resultsSection?.classList.contains('active'));
+
                     if (walletCard && walletInput) {
                         // Fill the wallet input
                         walletInput.value = query;
 
-                        // Scroll to top of results section
+                        // Scroll to wallet card (not results section) after longer delay
                         setTimeout(() => {
-                            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }, 100);
+                            console.log('[WALLET-FLOW] Scrolling to walletCard');
+                            walletCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 200);
 
                         // Trigger analysis after scroll
                         setTimeout(() => {
+                            console.log('[WALLET-FLOW] Triggering analyzeWalletAddress');
                             analyzeWalletAddress(query);
-                        }, 300);
+                        }, 400);
 
-                        showToast('� Analyzing wallet...');
+                        showToast('🔬 Analyzing wallet...');
                         return;
+                    } else {
+                        console.log('[WALLET-FLOW] ERROR: walletCard or walletInput not found!');
                     }
                 }
             } catch (error) {
