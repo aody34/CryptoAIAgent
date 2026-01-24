@@ -2065,8 +2065,26 @@ async function analyzeWalletAddress(address) {
         if (resultsEl) {
             resultsEl.style.display = 'block';
             console.log('[WALLET] Showing results element');
+            console.log('[WALLET] resultsEl computed display:', window.getComputedStyle(resultsEl).display);
+            console.log('[WALLET] resultsEl offsetParent:', resultsEl.offsetParent);
+            console.log('[WALLET] resultsEl  offsetHeight:', resultsEl.offsetHeight);
         } else {
             console.log('[WALLET] ERROR: resultsEl not found!');
+        }
+
+        // Also check the main results section
+        const mainResultsSection = document.getElementById('resultsSection');
+        if (mainResultsSection) {
+            console.log('[WALLET] Main resultsSection display:', window.getComputedStyle(mainResultsSection).display);
+            console.log('[WALLET] Main resultsSection has class active:', mainResultsSection.classList.contains('active'));
+            console.log('[WALLET] Main resultsSection offsetParent:', mainResultsSection.offsetParent);
+        }
+
+        // Check wallet card visibility
+        const walletCard = document.getElementById('walletDeepDiveCard');
+        if (walletCard) {
+            console.log('[WALLET] walletDeepDiveCard display:', window.getComputedStyle(walletCard).display);
+            console.log('[WALLET] walletDeepDiveCard offsetParent:', walletCard.offsetParent);
         }
 
         showToast(`Wallet analyzed: ${summary.shortAddress}`);
