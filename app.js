@@ -799,10 +799,10 @@ function setRiskMeter(id, level) {
  */
 function showWalletOnlyMode() {
     // List of card IDs to hide (token analysis cards)
+    // NOTE: Do NOT hide 'tab-overview' because walletDeepDiveCard is inside it!
     const tokenCardIds = [
         'tokenCard',
-        'tab-overview',
-        'resultsTabs'
+        'resultsTabs'  // Hide the tabs but not the tab content
     ];
 
     // Hide token-related cards
