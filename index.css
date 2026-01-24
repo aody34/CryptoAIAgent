@@ -151,6 +151,18 @@ h4 {
   padding: 0 var(--spacing-lg);
 }
 
+/* ===== RESULTS SECTION VISIBILITY ===== */
+.results-section {
+  display: none;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.results-section.active {
+  display: block;
+  opacity: 1;
+}
+
 /* ===== HEADER ===== */
 .header {
   padding: var(--spacing-lg) 0;
@@ -2105,8 +2117,15 @@ h4 {
 }
 
 @keyframes pulse-danger {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
 }
 
 /* Risk Flag Badges */
@@ -2144,8 +2163,15 @@ h4 {
 }
 
 @keyframes subtle-glow {
-  0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 136, 0.2); }
-  50% { box-shadow: 0 0 15px rgba(0, 255, 136, 0.4); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(0, 255, 136, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+  }
 }
 
 /* Wallet Deep Dive Card Styling */
@@ -2163,17 +2189,17 @@ h4 {
   #walletTokenPortfolio {
     grid-template-columns: 1fr !important;
   }
-  
+
   .wallet-header {
     flex-direction: column;
     text-align: center;
   }
-  
-  .wallet-header > div:last-child {
+
+  .wallet-header>div:last-child {
     text-align: center !important;
     margin-top: 1rem;
   }
-  
+
   .data-grid[style*="repeat(4, 1fr)"] {
     grid-template-columns: repeat(2, 1fr) !important;
   }
